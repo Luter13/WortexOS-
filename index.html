@@ -216,7 +216,7 @@ async function apiPost(op){
   if(!State.settings.apiUrl) throw new Error("API URL не задан");
   const res = await fetch(State.settings.apiUrl, {
     method:"POST",
-    headers:{ "Content-Type":"application/json" },
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
     body: JSON.stringify({
       ...op,
       token: State.settings.token || "",
@@ -1048,3 +1048,4 @@ render();
 </script>
 </body>
 </html>
+
