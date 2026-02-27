@@ -1,156 +1,1050 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vortex OS</title>
-
-<style>
-body { font-family: Arial; margin:0; background:#0f172a; color:white; }
-header { background:#1e293b; padding:15px; font-size:20px; }
-nav button { margin:5px; padding:8px 12px; border:none; cursor:pointer; }
-.container { padding:20px; }
-input, select { padding:6px; margin:5px 0; width:100%; }
-button.primary { background:#3b82f6; color:white; }
-.card { background:#1e293b; padding:15px; margin:10px 0; }
-.hidden { display:none; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wortex Agency OS</title>
+  <style>
+    :root{
+      --bg:#0b0c10; --card:#11131a; --text:#e7e9ee; --muted:#a6adbb; --line:#24283a;
+      --ok:#19c37d; --warn:#f4c152; --bad:#ff4d4d; --accent:#6ea8fe; --chip:#1a1f2e;
+      --shadow: 0 10px 30px rgba(0,0,0,.35); --r:14px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);}
+    header{position:sticky;top:0;z-index:5;background:rgba(11,12,16,.9);backdrop-filter: blur(8px);border-bottom:1px solid var(--line);}
+    .wrap{max-width:1200px;margin:0 auto;padding:14px 14px;}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .brand{display:flex;flex-direction:column;gap:2px}
+    .brand b{font-size:16px}
+    .brand span{font-size:12px;color:var(--muted)}
+    nav{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{border:1px solid var(--line);background:transparent;color:var(--text);padding:8px 10px;border-radius:999px;cursor:pointer;font-size:13px}
+    .tab.active{background:var(--chip);border-color:#2f3752}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--shadow)}
+    .card h3{margin:0 0 8px 0;font-size:14px}
+    .muted{color:var(--muted);font-size:12px}
+    .kpi{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:10px}
+    @media (max-width:900px){.kpi{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.kpi{grid-template-columns:1fr}}
+    .metric{display:flex;flex-direction:column;gap:6px}
+    .metric b{font-size:20px}
+    .btn{border:1px solid var(--line);background:var(--chip);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer;font-size:13px}
+    .btn.primary{background:var(--accent);border-color:transparent;color:#081018;font-weight:700}
+    .btn.ghost{background:transparent}
+    .btn.danger{background:rgba(255,77,77,.12);border-color:rgba(255,77,77,.35)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;background:rgba(110,168,254,.12);border:1px solid rgba(110,168,254,.25);font-size:12px;color:var(--text)}
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
+    th{color:var(--muted);font-weight:600;text-align:left}
+    tr:hover td{background:rgba(255,255,255,.02)}
+    .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+    .input, select, textarea{
+      width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--line);
+      background:#0f1220; color:var(--text); outline:none;
+    }
+    textarea{min-height:76px;resize:vertical}
+    .form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    @media (max-width:720px){.form{grid-template-columns:1fr}}
+    .sep{height:1px;background:var(--line);margin:10px 0}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:12px}
+    .status{font-weight:700}
+    .s-ok{color:var(--ok)} .s-warn{color:var(--warn)} .s-bad{color:var(--bad)}
+    .deadline.bad{color:var(--bad);font-weight:700}
+    .deadline.warn{color:var(--warn);font-weight:700}
+    .small{font-size:12px}
+    .hidden{display:none}
+    .toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(26,31,46,.95);
+      border:1px solid var(--line);padding:10px 12px;border-radius:12px;box-shadow:var(--shadow);font-size:13px;z-index:10}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:20}
+    .modal .box{width:min(920px,94vw);max-height:88vh;overflow:auto}
+    .modal.show{display:flex}
+  </style>
 </head>
 
 <body>
+<header>
+  <div class="wrap top">
+    <div class="brand">
+      <b>Wortex Agency OS</b>
+      <span id="connState" class="muted">Не подключено. Укажи URL в “Настройки”.</span>
+    </div>
+    <nav id="nav"></nav>
+    <div class="right">
+      <button class="btn" id="btnLoad">Загрузить данные</button>
+      <button class="btn primary" id="btnSync">Синхронизировать</button>
+    </div>
+  </div>
+</header>
 
-<header>Vortex Agency OS</header>
+<main class="wrap">
+  <div id="page"></div>
+</main>
 
-<nav id="nav"></nav>
+<div id="toast" class="toast hidden"></div>
 
-<div class="container" id="app"></div>
+<div id="modal" class="modal">
+  <div class="card box">
+    <div class="right">
+      <button class="btn ghost" onclick="UI.closeModal()">Закрыть</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
 
 <script>
+const SHEETS = ["Clients","Projects","Tasks","Transactions","Payouts","Team","UnitTypes","ProjectTypes","SplitRulesDefault","Templates","Access","AuditLog"];
+const LS_KEY = "wortex_os_settings_v2";
 
-const TABS = ["Дашборд","Финансы","Настройки"];
-
-let State = {
-  apiUrl: "",
-  role: "Team",
-  token: "",
-  data: {}
+const State = {
+  settings: { apiUrl: "", role: "Team", token: "", actor: "" },
+  data: Object.fromEntries(SHEETS.map(s => [s, []])),
+  dirtyQueue: [],
+  activeTab: "Дашборд",
 };
 
-function saveSettings(){
-  localStorage.setItem("vortex_settings", JSON.stringify(State));
-}
+const TabsAll = ["Дашборд","Клиенты","Проекты","Задачи","Финансы","Команда","Шаблоны","Чек-листы","Настройки"];
+
+const UI = {
+  toast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    setTimeout(()=>t.classList.add("hidden"), 2200);
+  },
+  setConn(text){ document.getElementById("connState").textContent = text; },
+  openModal(html){
+    document.getElementById("modalBody").innerHTML = html;
+    document.getElementById("modal").classList.add("show");
+  },
+  closeModal(){
+    document.getElementById("modal").classList.remove("show");
+  }
+};
 
 function loadSettings(){
-  const s = localStorage.getItem("vortex_settings");
-  if(s) State = JSON.parse(s);
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) State.settings = JSON.parse(raw);
+  }catch(e){}
+  updateConnLabel();
+}
+function saveSettings(){
+  localStorage.setItem(LS_KEY, JSON.stringify(State.settings));
+  updateConnLabel();
+}
+function updateConnLabel(){
+  if(!State.settings.apiUrl) UI.setConn("Не подключено. Укажи URL в “Настройки”.");
+  else UI.setConn(`Подключено. Роль: ${State.settings.role}`);
+}
+
+function visibleTabs(){
+  const role = State.settings.role || "Team";
+  return TabsAll.filter(t=>{
+    if(role==="Team" && t==="Финансы") return false;
+    return true;
+  });
 }
 
 function renderNav(){
   const nav = document.getElementById("nav");
   nav.innerHTML = "";
-
-  TABS.forEach(tab=>{
-    if(State.role==="Team" && tab==="Финансы") return;
-    const btn = document.createElement("button");
-    btn.innerText = tab;
-    btn.onclick = ()=>render(tab);
-    nav.appendChild(btn);
+  visibleTabs().forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "tab" + (State.activeTab===t ? " active":"");
+    b.textContent = t;
+    b.onclick = ()=>{ State.activeTab=t; render(); };
+    nav.appendChild(b);
   });
 }
 
-function render(tab="Дашборд"){
+function render(){
   renderNav();
-  const app = document.getElementById("app");
+  const page = document.getElementById("page");
+  const t = State.activeTab;
 
-  if(tab==="Настройки"){
-    app.innerHTML = `
-      <div class="card">
-        <h3>Настройки</h3>
-        API URL:<br>
-        <input id="apiUrl" value="${State.apiUrl || ""}">
-        Роль:<br>
-        <select id="role">
-          <option ${State.role==="Founder"?"selected":""}>Founder</option>
-          <option ${State.role==="PM"?"selected":""}>PM</option>
-          <option ${State.role==="Team"?"selected":""}>Team</option>
-        </select>
-        Токен:<br>
-        <input id="token" value="${State.token || ""}">
-        <button class="primary" onclick="saveConfig()">Сохранить</button>
-        <button onclick="loadData()">Загрузить данные</button>
-      </div>
-    `;
-  }
-
-  if(tab==="Финансы"){
-    app.innerHTML = `
-      <div class="card">
-        <h3>Добавить транзакцию</h3>
-        Сумма:<br>
-        <input id="amount">
-        <button class="primary" onclick="addTransaction()">Добавить</button>
-      </div>
-    `;
-  }
-
-  if(tab==="Дашборд"){
-    app.innerHTML = `
-      <div class="card">
-        <h3>Добро пожаловать</h3>
-        Роль: ${State.role}
-      </div>
-    `;
-  }
+  if(t==="Дашборд") page.innerHTML = renderDashboard();
+  else if(t==="Клиенты") page.innerHTML = renderClients();
+  else if(t==="Проекты") page.innerHTML = renderProjects();
+  else if(t==="Задачи") page.innerHTML = renderTasks();
+  else if(t==="Финансы") page.innerHTML = renderFinance();
+  else if(t==="Команда") page.innerHTML = renderTeam();
+  else if(t==="Шаблоны") page.innerHTML = renderTemplates();
+  else if(t==="Чек-листы") page.innerHTML = renderRoutines();
+  else if(t==="Настройки") page.innerHTML = renderSettings();
 }
 
-function saveConfig(){
-  State.apiUrl = document.getElementById("apiUrl").value;
-  State.role = document.getElementById("role").value;
-  State.token = document.getElementById("token").value;
-  saveSettings();
-  alert("Сохранено");
-  render();
+function nowISO(){ return new Date().toISOString(); }
+function shortDate(d){
+  if(!d) return "";
+  const dt = new Date(d);
+  if(isNaN(dt)) return String(d);
+  const yyyy = dt.getFullYear();
+  const mm = String(dt.getMonth()+1).padStart(2,"0");
+  const dd = String(dt.getDate()).padStart(2,"0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+function genId(prefix){
+  return prefix + Math.random().toString(16).slice(2,6).toUpperCase() + Date.now().toString().slice(-4);
 }
 
-async function loadData(){
-  if(!State.apiUrl){ alert("Нет API URL"); return; }
-  const res = await fetch(State.apiUrl);
+function sheetToObjects(sheetName){
+  const grid = State.data[sheetName] || [];
+  if(grid.length === 0) return [];
+  const headers = grid[0].map(h => String(h).trim());
+  const rows = grid.slice(1);
+  return rows.map(r=>{
+    const o = {};
+    headers.forEach((h,i)=> o[h]= r[i] ?? "");
+    return o;
+  });
+}
+
+async function apiGetAll(){
+  if(!State.settings.apiUrl) throw new Error("API URL не задан");
+  const res = await fetch(State.settings.apiUrl, { method:"GET" });
   const json = await res.json();
-  State.data = json.data;
-  alert("Данные загружены");
+  if(!json.ok) throw new Error(json.error || "GET ошибка");
+  return json.data;
 }
 
-async function addTransaction(){
-  if(!State.apiUrl){ alert("Нет API URL"); return; }
-
-  const amount = document.getElementById("amount").value;
-
-  const res = await fetch(State.apiUrl,{
+async function apiPost(op){
+  if(!State.settings.apiUrl) throw new Error("API URL не задан");
+  const res = await fetch(State.settings.apiUrl, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({
-      sheet:"Transactions",
-      action:"append",
-      row:{ transaction_id:"T"+Date.now(), amount:amount },
-      token:State.token,
-      actor:"UI",
-      actorRole:State.role
+      ...op,
+      token: State.settings.token || "",
+      actor: (State.settings.actor || "").trim() || "Unknown",
+      actorRole: State.settings.role || "Team",
     })
   });
-
   const json = await res.json();
+  if(!json.ok) throw new Error(json.error || "POST ошибка");
+  return json;
+}
 
-  if(!json.ok){
-    alert("Ошибка: "+json.error);
-  } else {
-    alert("Добавлено");
+function setLocalDataFromApiPayload(payload){
+  SHEETS.forEach(name=>{
+    State.data[name] = payload[name] || [[/*empty*/]];
+  });
+}
+
+async function loadAll(){
+  const data = await apiGetAll();
+  setLocalDataFromApiPayload(data);
+  UI.toast("Данные загружены");
+  render();
+}
+
+function queueOp(op){
+  State.dirtyQueue.push(op);
+  UI.toast("В очередь синка: " + op.sheet + " / " + op.action);
+}
+
+async function syncQueue(){
+  if(State.dirtyQueue.length===0){ UI.toast("Нет изменений для синка"); return; }
+  const q = [...State.dirtyQueue];
+  let ok = 0;
+  for(const op of q){
+    try{
+      await apiPost(op);
+      ok++;
+    }catch(e){
+      UI.toast("Ошибка синка: " + (e.message||e));
+      break;
+    }
+  }
+  State.dirtyQueue.splice(0, ok);
+  UI.toast("Синк выполнен: " + ok);
+  await loadAll();
+}
+
+function findById(sheetName, id){
+  const objs = sheetToObjects(sheetName);
+  const headers = (State.data[sheetName]?.[0]||[]);
+  const idKey = headers[0] ? String(headers[0]) : "id";
+  return objs.find(o=>String(o[idKey])===String(id));
+}
+function upsertLocal(sheetName, rowObj){
+  const grid = State.data[sheetName] || [];
+  if(grid.length===0) return;
+  const headers = grid[0].map(h=>String(h));
+  const idField = headers[0];
+  const idVal = rowObj[idField];
+  if(!idVal) return;
+  let idx = -1;
+  for(let i=1;i<grid.length;i++){
+    if(String(grid[i][0])===String(idVal)){ idx = i; break; }
+  }
+  const row = headers.map(h => rowObj[h] ?? "");
+  if(idx===-1) grid.push(row);
+  else grid[idx] = row;
+  State.data[sheetName] = grid;
+}
+function deleteLocal(sheetName, idVal){
+  const grid = State.data[sheetName] || [];
+  if(grid.length<=1) return;
+  for(let i=1;i<grid.length;i++){
+    if(String(grid[i][0])===String(idVal)){ grid.splice(i,1); break; }
   }
 }
 
+function deadlineClass(due){
+  if(!due) return "";
+  const dt = new Date(due);
+  if(isNaN(dt)) return "";
+  const now = new Date();
+  const diff = dt - now;
+  if(diff < 0) return "bad";
+  if(diff <= 48*3600*1000) return "warn";
+  return "";
+}
+
+function sum(arr){ return arr.reduce((a,b)=>a+(Number(b)||0),0); }
+function currencyFmt(n, cur=""){ const x=Number(n)||0; return (cur?cur+" ":"") + x.toFixed(2); }
+function escapeHtml(s){ return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+function escapeAttr(s){ return escapeHtml(s).replaceAll('"',"&quot;"); }
+
+function renderDashboard(){
+  const tasks = sheetToObjects("Tasks");
+  const projects = sheetToObjects("Projects");
+  const tx = sheetToObjects("Transactions");
+  const team = sheetToObjects("Team");
+
+  const overdue = tasks.filter(t=>t.status!=="Done" && deadlineClass(t.due_date)==="bad").length;
+  const inReview = tasks.filter(t=>t.status==="Review").length;
+  const redProjects = projects.filter(p=>String(p.status).toLowerCase()==="red").length;
+
+  const monthKey = shortDate(new Date()).slice(0,7);
+  const monthIncome = sum(tx.filter(x=>x.type==="income" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount));
+  const monthExpense = sum(tx.filter(x=>x.type==="expense" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount));
+
+  const openTasks = tasks.filter(t=>t.status!=="Done");
+  const unitsByAssignee = {};
+  openTasks.forEach(t=>{
+    const a = String(t.assignee||"").trim() || "—";
+    unitsByAssignee[a] = (unitsByAssignee[a]||0) + (Number(t.units)||0);
+  });
+  const overload = team.filter(p=>{
+    const cap = Number(p.weekly_capacity_units)||0;
+    const used = unitsByAssignee[p.person]||0;
+    return cap>0 && used/cap > 0.8;
+  }).length;
+
+  return `
+    <div class="kpi">
+      <div class="card metric"><span class="muted">Просроченные задачи</span><b>${overdue}</b><span class="muted">нужно закрыть срочно</span></div>
+      <div class="card metric"><span class="muted">Задачи на проверке</span><b>${inReview}</b><span class="muted">review bottleneck</span></div>
+      <div class="card metric"><span class="muted">Красные проекты</span><b>${redProjects}</b><span class="muted">требуют внимания</span></div>
+      <div class="card metric"><span class="muted">Перегруз команды</span><b>${overload}</b><span class="muted">людей &gt;80%</span></div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Быстрые действия</h3>
+        <div class="row">
+          <button class="btn primary" onclick="Actions.openAddClient()">+ Клиент</button>
+          <button class="btn primary" onclick="Actions.openAddProject()">+ Проект</button>
+          <button class="btn primary" onclick="Actions.openAddTask()">+ Задача</button>
+          ${(State.settings.role==="Team") ? "" : `<button class="btn primary" onclick="Actions.openAddTx()">+ Платёж/расход</button>`}
+        </div>
+        <p class="muted small" style="margin-top:10px">
+          После добавления нажми “Синхронизировать”.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Финансы за месяц (${monthKey})</h3>
+        <div class="row">
+          <span class="pill">Доход: <b>${currencyFmt(monthIncome)}</b></span>
+          <span class="pill">Расход: <b>${currencyFmt(monthExpense)}</b></span>
+          <span class="pill">Профит: <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
+        </div>
+        <p class="muted small" style="margin-top:10px">
+          Team не видит “Финансы”. PM/Founder должны указать токен в “Настройки”.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function renderClients(){
+  const clients = sheetToObjects("Clients");
+  const projects = sheetToObjects("Projects");
+
+  const rows = clients.map(c=>{
+    const count = projects.filter(p=>p.client_id===c.client_id).length;
+    return `
+      <tr>
+        <td><b>${escapeHtml(c.client_name||"")}</b><div class="muted small">${escapeHtml(c.client_id||"")}</div></td>
+        <td>${escapeHtml(c.platform||"")}</td>
+        <td>${escapeHtml(c.status||"")}</td>
+        <td>${count}</td>
+        <td class="right">
+          <button class="btn" onclick="Actions.openEditClient('${c.client_id}')">Изменить</button>
+          <button class="btn danger" onclick="Actions.deleteRow('Clients','${c.client_id}')">Удалить</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <h3 style="margin:0">Клиенты</h3>
+        <button class="btn primary" onclick="Actions.openAddClient()">+ Добавить клиента</button>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Клиент</th><th>Платформа</th><th>Статус</th><th>Проектов</th><th></th>
+        </tr></thead>
+        <tbody>${rows || `<tr><td colspan="5" class="muted">Пока пусто</td></tr>`}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderProjects(){
+  const projects = sheetToObjects("Projects");
+  const clients = sheetToObjects("Clients");
+  const tasks = sheetToObjects("Tasks");
+
+  const rows = projects.map(p=>{
+    const client = clients.find(c=>c.client_id===p.client_id);
+    const open = tasks.filter(t=>t.project_id===p.project_id && t.status!=="Done").length;
+    const st = String(p.status||"").toLowerCase();
+    const cls = st==="green"?"s-ok":(st==="yellow"?"s-warn":(st==="red"?"s-bad":""));
+    return `
+      <tr>
+        <td><b>${escapeHtml(p.project_name||"")}</b><div class="muted small">${escapeHtml(p.project_id||"")} • ${escapeHtml(p.type||"")}</div></td>
+        <td>${escapeHtml(client?.client_name||"")}</td>
+        <td class="status ${cls}">${escapeHtml(p.status||"")}</td>
+        <td>${escapeHtml(p.reviewer||"")}</td>
+        <td>${escapeHtml(p.weekly_units||"")}</td>
+        <td>${open}</td>
+        <td class="right">
+          <button class="btn" onclick="Actions.openEditProject('${p.project_id}')">Изменить</button>
+          <button class="btn" onclick="Actions.openAddTask('${p.project_id}')">+ Задача</button>
+          <button class="btn danger" onclick="Actions.deleteRow('Projects','${p.project_id}')">Удалить</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <h3 style="margin:0">Проекты</h3>
+        <button class="btn primary" onclick="Actions.openAddProject()">+ Добавить проект</button>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Проект</th><th>Клиент</th><th>Статус</th><th>Проверяющий</th><th>Юнитов/нед</th><th>Открытых задач</th><th></th>
+        </tr></thead>
+        <tbody>${rows || `<tr><td colspan="7" class="muted">Пока пусто</td></tr>`}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderTasks(){
+  const tasks = sheetToObjects("Tasks");
+  const projects = sheetToObjects("Projects");
+
+  const rows = tasks
+    .sort((a,b)=> String(a.due_date||"").localeCompare(String(b.due_date||"")))
+    .map(t=>{
+      const p = projects.find(x=>x.project_id===t.project_id);
+      const dcls = deadlineClass(t.due_date);
+      const dHtml = `<span class="deadline ${dcls}">${escapeHtml(shortDate(t.due_date))}</span>`;
+      return `
+        <tr>
+          <td><b>${escapeHtml(t.title||"")}</b><div class="muted small">${escapeHtml(t.task_id||"")} • ${escapeHtml(p?.project_name||"")}</div></td>
+          <td>${escapeHtml(t.assignee||"")}</td>
+          <td>${escapeHtml(t.status||"")}</td>
+          <td>${dHtml}</td>
+          <td>${escapeHtml(t.units||"")}</td>
+          <td class="right">
+            <button class="btn" onclick="Actions.taskMove('${t.task_id}','To do')">To do</button>
+            <button class="btn" onclick="Actions.taskMove('${t.task_id}','Doing')">Doing</button>
+            <button class="btn" onclick="Actions.taskMove('${t.task_id}','Review')">Review</button>
+            <button class="btn" onclick="Actions.taskMove('${t.task_id}','Done')">Done</button>
+            <button class="btn" onclick="Actions.openEditTask('${t.task_id}')">Изм.</button>
+            <button class="btn danger" onclick="Actions.deleteRow('Tasks','${t.task_id}')">Удалить</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+  return `
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <h3 style="margin:0">Задачи</h3>
+        <button class="btn primary" onclick="Actions.openAddTask()">+ Добавить задачу</button>
+      </div>
+      <p class="muted">Подсветка дедлайнов: красный — просрочено, жёлтый — 48 часов до дедлайна.</p>
+      <table>
+        <thead><tr>
+          <th>Задача</th><th>Исполнитель</th><th>Статус</th><th>Дедлайн</th><th>Юниты</th><th></th>
+        </tr></thead>
+        <tbody>${rows || `<tr><td colspan="6" class="muted">Пока пусто</td></tr>`}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderFinance(){
+  const tx = sheetToObjects("Transactions");
+  const projects = sheetToObjects("Projects");
+
+  const monthKey = shortDate(new Date()).slice(0,7);
+  const monthIncome = sum(tx.filter(x=>x.type==="income" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount));
+  const monthExpense = sum(tx.filter(x=>x.type==="expense" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount));
+
+  const rows = tx
+    .sort((a,b)=> String(b.date||"").localeCompare(String(a.date||"")))
+    .map(x=>{
+      const p = projects.find(p=>p.project_id===x.project_id);
+      return `
+        <tr>
+          <td>${escapeHtml(shortDate(x.date))}</td>
+          <td>${escapeHtml(p?.project_name||"")}</td>
+          <td>${escapeHtml(x.type)}</td>
+          <td><b>${escapeHtml(currencyFmt(x.amount, x.currency))}</b></td>
+          <td>${escapeHtml(x.description||"")}</td>
+          <td class="right">
+            <button class="btn danger" onclick="Actions.deleteRow('Transactions','${x.transaction_id}')">Удалить</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+  return `
+    <div class="grid">
+      <div class="card">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <h3 style="margin:0">Транзакции</h3>
+          <button class="btn primary" onclick="Actions.openAddTx()">+ Доход/Расход</button>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Дата</th><th>Проект</th><th>Тип</th><th>Сумма</th><th>Описание</th><th></th>
+          </tr></thead>
+          <tbody>${rows || `<tr><td colspan="6" class="muted">Пока пусто</td></tr>`}</tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Итог за месяц (${monthKey})</h3>
+        <div class="row">
+          <span class="pill">Доход: <b>${currencyFmt(monthIncome)}</b></span>
+          <span class="pill">Расход: <b>${currencyFmt(monthExpense)}</b></span>
+          <span class="pill">Профит: <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
+        </div>
+        <div class="sep"></div>
+        <p class="muted small">Если видишь ошибку “нужен токен” — зайди в “Настройки” и вставь токен Founder/PM.</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderTeam(){
+  const team = sheetToObjects("Team");
+  const tasks = sheetToObjects("Tasks");
+  const openTasks = tasks.filter(t=>t.status!=="Done");
+  const unitsBy = {};
+  openTasks.forEach(t=>{
+    const a = String(t.assignee||"").trim() || "—";
+    unitsBy[a] = (unitsBy[a]||0) + (Number(t.units)||0);
+  });
+
+  const rows = team.map(p=>{
+    const cap = Number(p.weekly_capacity_units)||0;
+    const used = unitsBy[p.person]||0;
+    const ratio = cap>0 ? used/cap : 0;
+    const cls = cap===0 ? "" : (ratio>1 ? "s-bad" : (ratio>0.8 ? "s-warn" : "s-ok"));
+    return `
+      <tr>
+        <td><b>${escapeHtml(p.person||"")}</b><div class="muted small">${escapeHtml(p.role||"")} • ${escapeHtml(p.notes||"")}</div></td>
+        <td>${cap}</td>
+        <td>${used}</td>
+        <td class="${cls}"><b>${cap?Math.round(ratio*100):0}%</b></td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="card">
+      <h3>Команда</h3>
+      <table>
+        <thead><tr>
+          <th>Человек</th><th>Capacity</th><th>Назначено</th><th>Загрузка</th>
+        </tr></thead>
+        <tbody>${rows || `<tr><td colspan="4" class="muted">Пока пусто</td></tr>`}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderTemplates(){
+  return `
+    <div class="card">
+      <h3>Шаблоны</h3>
+      <p class="muted">
+        Шаблоны лежат в листе Templates. Следующий шаг: кнопка “Создать проект по шаблону”.
+      </p>
+    </div>
+  `;
+}
+
+function renderRoutines(){
+  const key = "wortex_os_routines_v1";
+  let r = { daily:{}, weekly:{}, monthly:{} };
+  try{ const raw = localStorage.getItem(key); if(raw) r = JSON.parse(raw); }catch(e){}
+
+  const Daily = ["Просроченные задачи","Review bottleneck","Красные проекты","Финансы (если Founder/PM)","1 стратегическая задача дня"];
+  function box(list, group){
+    return `
+      <div class="card">
+        <h3>${group}</h3>
+        <div class="sep"></div>
+        ${list.map((item, idx)=>{
+          const id = group+"_"+idx;
+          const checked = !!r[group.toLowerCase()]?.[id];
+          return `
+            <label class="row" style="align-items:center;gap:10px;margin:8px 0">
+              <input type="checkbox" ${checked?"checked":""} onchange="Actions.toggleRoutine('${group.toLowerCase()}','${id}',this.checked)" />
+              <span>${escapeHtml(item)}</span>
+            </label>
+          `;
+        }).join("")}
+        <div class="sep"></div>
+        <button class="btn" onclick="Actions.resetRoutine('${group.toLowerCase()}')">Сбросить</button>
+      </div>
+    `;
+  }
+  return `<div class="grid">${box(Daily,"Daily")}${box(["Статусы проектов","Загрузка команды","Метрики/отчёты","Финансы","1 решение недели"],"Weekly")}</div>`;
+}
+
+function renderSettings(){
+  const apiUrl = State.settings.apiUrl || "";
+  const role = State.settings.role || "Team";
+  const token = State.settings.token || "";
+  const actor = State.settings.actor || "";
+
+  return `
+    <div class="card">
+      <h3>Настройки</h3>
+      <p class="muted">Team не видит Финансы. PM/Founder вставляют токен, чтобы синкать Transactions/Payouts.</p>
+      <div class="form">
+        <div>
+          <label class="muted small">Apps Script URL (/exec)</label>
+          <input class="input" id="apiUrl" value="${escapeAttr(apiUrl)}" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div>
+          <label class="muted small">Роль</label>
+          <select class="input" id="uiRole">
+            <option ${role==="Founder"?"selected":""}>Founder</option>
+            <option ${role==="PM"?"selected":""}>PM</option>
+            <option ${role==="Team"?"selected":""}>Team</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted small">Токен</label>
+          <input class="input" id="uiToken" value="${escapeAttr(token)}" placeholder="f-013 / pm-707">
+        </div>
+        <div>
+          <label class="muted small">Имя (для логов)</label>
+          <input class="input" id="uiActor" value="${escapeAttr(actor)}" placeholder="Лиза / Виталик / ...">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" onclick="Actions.saveSettings()">Сохранить</button>
+        <button class="btn" onclick="Actions.testConnection()">Проверить соединение</button>
+      </div>
+
+      <div class="sep"></div>
+      <div class="muted small">Очередь синка: <b>${State.dirtyQueue.length}</b> операций</div>
+    </div>
+  `;
+}
+
+const Actions = {
+  saveSettings(){
+    State.settings.apiUrl = document.getElementById("apiUrl").value.trim();
+    State.settings.role = document.getElementById("uiRole").value;
+    State.settings.token = document.getElementById("uiToken").value.trim();
+    State.settings.actor = document.getElementById("uiActor").value.trim();
+    saveSettings();
+    UI.toast("Сохранено");
+    render();
+  },
+  async testConnection(){
+    try{ await apiGetAll(); UI.toast("ОК: API отвечает"); }
+    catch(e){ UI.toast("Ошибка: " + (e.message||e)); }
+  },
+  toggleRoutine(group, id, checked){
+    const key="wortex_os_routines_v1";
+    let r={daily:{},weekly:{},monthly:{}};
+    try{ const raw=localStorage.getItem(key); if(raw) r=JSON.parse(raw);}catch(e){}
+    r[group]=r[group]||{};
+    r[group][id]=checked;
+    localStorage.setItem(key, JSON.stringify(r));
+  },
+  resetRoutine(group){
+    const key="wortex_os_routines_v1";
+    let r={daily:{},weekly:{},monthly:{}};
+    try{ const raw=localStorage.getItem(key); if(raw) r=JSON.parse(raw);}catch(e){}
+    r[group]={};
+    localStorage.setItem(key, JSON.stringify(r));
+    render();
+  },
+  deleteRow(sheet, id){
+    if(!confirm("Удалить запись?")) return;
+    queueOp({ sheet, action:"delete", row: { [State.data[sheet][0][0]]: id } });
+    deleteLocal(sheet, id);
+    render();
+  },
+
+  openAddClient(){
+    UI.openModal(`
+      <h3>Добавить клиента</h3>
+      <div class="form">
+        <div><label class="muted small">Имя клиента</label><input class="input" id="c_name"></div>
+        <div><label class="muted small">Платформа</label><input class="input" id="c_platform" placeholder="YouTube / TikTok / Instagram"></div>
+        <div><label class="muted small">Статус</label>
+          <select class="input" id="c_status"><option>Onboarding</option><option selected>Active</option><option>Paused</option><option>Churned</option></select>
+        </div>
+        <div><label class="muted small">Health (1–5)</label><input class="input" id="c_health"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="c_notes"></textarea></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px">
+        <button class="btn primary" onclick="Actions.saveClientNew()">Сохранить</button>
+      </div>
+    `);
+  },
+  saveClientNew(){
+    const row = {
+      client_id: genId("C"),
+      client_name: document.getElementById("c_name").value.trim(),
+      platform: document.getElementById("c_platform").value.trim(),
+      status: document.getElementById("c_status").value,
+      health_score: document.getElementById("c_health").value.trim(),
+      notes: document.getElementById("c_notes").value.trim(),
+      created_at: nowISO()
+    };
+    if(!row.client_name) return UI.toast("Заполни имя клиента");
+    queueOp({ sheet:"Clients", action:"upsert", row });
+    upsertLocal("Clients", row);
+    UI.closeModal(); render();
+  },
+  openEditClient(id){
+    const c = findById("Clients", id); if(!c) return;
+    UI.openModal(`
+      <h3>Изменить клиента</h3>
+      <div class="form">
+        <div><label class="muted small">client_id</label><input class="input" id="c_id" value="${escapeAttr(c.client_id)}" disabled></div>
+        <div><label class="muted small">Имя клиента</label><input class="input" id="c_name" value="${escapeAttr(c.client_name)}"></div>
+        <div><label class="muted small">Платформа</label><input class="input" id="c_platform" value="${escapeAttr(c.platform)}"></div>
+        <div><label class="muted small">Статус</label>
+          <select class="input" id="c_status">
+            ${["Onboarding","Active","Paused","Churned"].map(s=>`<option ${c.status===s?"selected":""}>${s}</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Health</label><input class="input" id="c_health" value="${escapeAttr(c.health_score)}"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="c_notes">${escapeHtml(c.notes||"")}</textarea></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px">
+        <button class="btn primary" onclick="Actions.saveClientEdit()">Сохранить</button>
+      </div>
+    `);
+  },
+  saveClientEdit(){
+    const row = {
+      client_id: document.getElementById("c_id").value,
+      client_name: document.getElementById("c_name").value.trim(),
+      platform: document.getElementById("c_platform").value.trim(),
+      status: document.getElementById("c_status").value,
+      health_score: document.getElementById("c_health").value.trim(),
+      notes: document.getElementById("c_notes").value.trim(),
+      created_at: (findById("Clients", document.getElementById("c_id").value)?.created_at) || ""
+    };
+    queueOp({ sheet:"Clients", action:"upsert", row });
+    upsertLocal("Clients", row);
+    UI.closeModal(); render();
+  },
+
+  openAddProject(){
+    const clients = sheetToObjects("Clients");
+    const team = sheetToObjects("Team");
+    UI.openModal(`
+      <h3>Добавить проект</h3>
+      <div class="form">
+        <div><label class="muted small">Клиент</label>
+          <select class="input" id="p_client">${clients.map(c=>`<option value="${escapeAttr(c.client_id)}">${escapeHtml(c.client_name)}</option>`).join("")}</select>
+        </div>
+        <div><label class="muted small">Название проекта</label><input class="input" id="p_name"></div>
+        <div><label class="muted small">Тип</label><input class="input" id="p_type" placeholder="YouTube / TikTok / ..."></div>
+        <div><label class="muted small">Проверяющий</label><input class="input" id="p_reviewer" list="teamList"></div>
+        <datalist id="teamList">${team.map(x=>`<option value="${escapeAttr(x.person)}">`).join("")}</datalist>
+        <div><label class="muted small">Статус</label>
+          <select class="input" id="p_status"><option>Green</option><option>Yellow</option><option>Red</option></select>
+        </div>
+        <div><label class="muted small">Юнитов/нед</label><input class="input" id="p_weekly" placeholder="15"></div>
+        <div style="grid-column:1/-1"><label class="muted small">KPI</label><input class="input" id="p_kpi"></div>
+        <div><label class="muted small">Старт</label><input class="input" id="p_start" type="date"></div>
+        <div><label class="muted small">Цель дата</label><input class="input" id="p_target" type="date"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="p_notes"></textarea></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px">
+        <button class="btn primary" onclick="Actions.saveProjectNew()">Сохранить</button>
+      </div>
+    `);
+  },
+  saveProjectNew(){
+    const row = {
+      project_id: genId("P"),
+      client_id: document.getElementById("p_client").value,
+      project_name: document.getElementById("p_name").value.trim(),
+      type: document.getElementById("p_type").value.trim(),
+      reviewer: document.getElementById("p_reviewer").value.trim(),
+      status: document.getElementById("p_status").value,
+      weekly_units: document.getElementById("p_weekly").value.trim(),
+      kpi_goal: document.getElementById("p_kpi").value.trim(),
+      start_date: document.getElementById("p_start").value,
+      target_date: document.getElementById("p_target").value,
+      notes: document.getElementById("p_notes").value.trim()
+    };
+    if(!row.project_name) return UI.toast("Заполни название проекта");
+    queueOp({ sheet:"Projects", action:"upsert", row });
+    upsertLocal("Projects", row);
+    UI.closeModal(); render();
+  },
+  openEditProject(id){
+    const p = findById("Projects", id); if(!p) return;
+    const team = sheetToObjects("Team");
+    const clients = sheetToObjects("Clients");
+    UI.openModal(`
+      <h3>Изменить проект</h3>
+      <div class="form">
+        <div><label class="muted small">project_id</label><input class="input" id="p_id" value="${escapeAttr(p.project_id)}" disabled></div>
+        <div><label class="muted small">Клиент</label>
+          <select class="input" id="p_client">
+            ${clients.map(c=>`<option value="${escapeAttr(c.client_id)}" ${p.client_id===c.client_id?"selected":""}>${escapeHtml(c.client_name)}</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Название</label><input class="input" id="p_name" value="${escapeAttr(p.project_name)}"></div>
+        <div><label class="muted small">Тип</label><input class="input" id="p_type" value="${escapeAttr(p.type)}"></div>
+        <div><label class="muted small">Проверяющий</label><input class="input" id="p_reviewer" list="teamList" value="${escapeAttr(p.reviewer)}"></div>
+        <datalist id="teamList">${team.map(x=>`<option value="${escapeAttr(x.person)}">`).join("")}</datalist>
+        <div><label class="muted small">Статус</label>
+          <select class="input" id="p_status">
+            ${["Green","Yellow","Red"].map(s=>`<option ${p.status===s?"selected":""}>${s}</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Юнитов/нед</label><input class="input" id="p_weekly" value="${escapeAttr(p.weekly_units)}"></div>
+        <div style="grid-column:1/-1"><label class="muted small">KPI</label><input class="input" id="p_kpi" value="${escapeAttr(p.kpi_goal)}"></div>
+        <div><label class="muted small">Старт</label><input class="input" id="p_start" type="date" value="${escapeAttr(p.start_date)}"></div>
+        <div><label class="muted small">Цель дата</label><input class="input" id="p_target" type="date" value="${escapeAttr(p.target_date)}"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="p_notes">${escapeHtml(p.notes||"")}</textarea></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px">
+        <button class="btn primary" onclick="Actions.saveProjectEdit()">Сохранить</button>
+      </div>
+    `);
+  },
+  saveProjectEdit(){
+    const row = {
+      project_id: document.getElementById("p_id").value,
+      client_id: document.getElementById("p_client").value,
+      project_name: document.getElementById("p_name").value.trim(),
+      type: document.getElementById("p_type").value.trim(),
+      reviewer: document.getElementById("p_reviewer").value.trim(),
+      status: document.getElementById("p_status").value,
+      weekly_units: document.getElementById("p_weekly").value.trim(),
+      kpi_goal: document.getElementById("p_kpi").value.trim(),
+      start_date: document.getElementById("p_start").value,
+      target_date: document.getElementById("p_target").value,
+      notes: document.getElementById("p_notes").value.trim()
+    };
+    queueOp({ sheet:"Projects", action:"upsert", row });
+    upsertLocal("Projects", row);
+    UI.closeModal(); render();
+  },
+
+  openAddTask(projectId=""){
+    const projects = sheetToObjects("Projects");
+    const team = sheetToObjects("Team");
+    const units = sheetToObjects("UnitTypes").filter(u=>String(u.is_active).toUpperCase()==="TRUE");
+    UI.openModal(`
+      <h3>Добавить задачу</h3>
+      <div class="form">
+        <div><label class="muted small">Проект</label>
+          <select class="input" id="t_project">
+            ${projects.map(p=>`<option value="${escapeAttr(p.project_id)}" ${projectId===p.project_id?"selected":""}>${escapeHtml(p.project_name)}</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Название</label><input class="input" id="t_title"></div>
+        <div><label class="muted small">Исполнитель</label><input class="input" id="t_assignee" list="teamPeople"></div>
+        <datalist id="teamPeople">${team.map(p=>`<option value="${escapeAttr(p.person)}">`).join("")}</datalist>
+        <div><label class="muted small">Приоритет</label><select class="input" id="t_priority"><option>P1</option><option selected>P2</option><option>P3</option></select></div>
+        <div><label class="muted small">Статус</label><select class="input" id="t_status"><option>To do</option><option>Doing</option><option>Review</option><option>Done</option></select></div>
+        <div><label class="muted small">Дедлайн</label><input class="input" id="t_due" type="date"></div>
+        <div><label class="muted small">Юнит (тип)</label>
+          <select class="input" id="t_unitType" onchange="Actions.applyUnitValue()">
+            <option value="">— выбрать —</option>
+            ${units.map(u=>`<option value="${escapeAttr(u.unit_value)}">${escapeHtml(u.unit_name)} (=${escapeHtml(u.unit_value)})</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Юниты</label><input class="input" id="t_units"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="t_notes"></textarea></div>
+        <div style="grid-column:1/-1"><label class="muted small">Вложения</label><input class="input" id="t_attach" placeholder="ссылка"></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px">
+        <button class="btn primary" onclick="Actions.saveTaskNew()">Сохранить</button>
+      </div>
+    `);
+  },
+  applyUnitValue(){
+    const v = document.getElementById("t_unitType").value;
+    if(v) document.getElementById("t_units").value = v;
+  },
+  saveTaskNew(){
+    const row = {
+      task_id: genId("T"),
+      project_id: document.getElementById("t_project").value,
+      title: document.getElementById("t_title").value.trim(),
+      assignee: document.getElementById("t_assignee").value.trim(),
+      units: document.getElementById("t_units").value.trim(),
+      priority: document.getElementById("t_priority").value,
+      status: document.getElementById("t_status").value,
+      due_date: document.getElementById("t_due").value,
+      created_at: nowISO(),
+      completed_at: "",
+      notes: document.getElementById("t_notes").value.trim(),
+      attachments: document.getElementById("t_attach").value.trim()
+    };
+    if(!row.title) return UI.toast("Заполни название задачи");
+    queueOp({ sheet:"Tasks", action:"upsert", row });
+    upsertLocal("Tasks", row);
+    UI.closeModal(); render();
+  },
+  openEditTask(id){
+    const t = findById("Tasks", id); if(!t) return;
+    const projects = sheetToObjects("Projects");
+    const team = sheetToObjects("Team");
+    UI.openModal(`
+      <h3>Изменить задачу</h3>
+      <div class="form">
+        <div><label class="muted small">task_id</label><input class="input" id="t_id" value="${escapeAttr(t.task_id)}" disabled></div>
+        <div><label class="muted small">Проект</label>
+          <select class="input" id="t_project">${projects.map(p=>`<option value="${escapeAttr(p.project_id)}" ${t.project_id===p.project_id?"selected":""}>${escapeHtml(p.project_name)}</option>`).join("")}</select>
+        </div>
+        <div><label class="muted small">Название</label><input class="input" id="t_title" value="${escapeAttr(t.title)}"></div>
+        <div><label class="muted small">Исполнитель</label><input class="input" id="t_assignee" list="teamPeople" value="${escapeAttr(t.assignee)}"></div>
+        <datalist id="teamPeople">${team.map(p=>`<option value="${escapeAttr(p.person)}">`).join("")}</datalist>
+        <div><label class="muted small">Статус</label>
+          <select class="input" id="t_status">${["To do","Doing","Review","Done"].map(s=>`<option ${t.status===s?"selected":""}>${s}</option>`).join("")}</select>
+        </div>
+        <div><label class="muted small">Дедлайн</label><input class="input" id="t_due" type="date" value="${escapeAttr(t.due_date)}"></div>
+        <div><label class="muted small">Юниты</label><input class="input" id="t_units" value="${escapeAttr(t.units)}"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="t_notes">${escapeHtml(t.notes||"")}</textarea></div>
+        <div style="grid-column:1/-1"><label class="muted small">Вложения</label><input class="input" id="t_attach" value="${escapeAttr(t.attachments)}"></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px">
+        <button class="btn primary" onclick="Actions.saveTaskEdit()">Сохранить</button>
+      </div>
+    `);
+  },
+  saveTaskEdit(){
+    const id = document.getElementById("t_id").value;
+    const prev = findById("Tasks", id) || {};
+    const status = document.getElementById("t_status").value;
+    const row = {
+      task_id: id,
+      project_id: document.getElementById("t_project").value,
+      title: document.getElementById("t_title").value.trim(),
+      assignee: document.getElementById("t_assignee").value.trim(),
+      units: document.getElementById("t_units").value.trim(),
+      priority: prev.priority || "P2",
+      status,
+      due_date: document.getElementById("t_due").value,
+      created_at: prev.created_at || "",
+      completed_at: (status==="Done" ? (prev.completed_at || nowISO()) : ""),
+      notes: document.getElementById("t_notes").value.trim(),
+      attachments: document.getElementById("t_attach").value.trim()
+    };
+    queueOp({ sheet:"Tasks", action:"upsert", row });
+    upsertLocal("Tasks", row);
+    UI.closeModal(); render();
+  },
+  taskMove(taskId, newStatus){
+    const t = findById("Tasks", taskId); if(!t) return;
+    const row = {...t, status:newStatus};
+    if(newStatus==="Done" && !row.completed_at) row.completed_at = nowISO();
+    if(newStatus!=="Done") row.completed_at = "";
+    queueOp({ sheet:"Tasks", action:"upsert", row });
+    upsertLocal("Tasks", row);
+    render();
+  },
+
+  openAddTx(){
+    const projects = sheetToObjects("Projects");
+    UI.openModal(`
+      <h3>Добавить доход/расход</h3>
+      <div class="form">
+        <div><label class="muted small">Проект</label>
+          <select class="input" id="f_project">${projects.map(p=>`<option value="${escapeAttr(p.project_id)}">${escapeHtml(p.project_name)}</option>`).join("")}</select>
+        </div>
+        <div><label class="muted small">Тип</label>
+          <select class="input" id="f_type"><option value="income">income</option><option value="expense">expense</option></select>
+        </div>
+        <div><label class="muted small">Сумма</label><input class="input" id="f_amount"></div>
+        <div><label class="muted small">Валюта</label><input class="input" id="f_cur" value="EUR"></div>
+        <div><label class="muted small">Дата</label><input class="input" id="f_date" type="date" value="${shortDate(new Date())}"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Описание</label><input class="input" id="f_desc"></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px">
+        <button class="btn primary" onclick="Actions.saveTxNew()">Сохранить</button>
+      </div>
+    `);
+  },
+  saveTxNew(){
+    const row = {
+      transaction_id: genId("F"),
+      project_id: document.getElementById("f_project").value,
+      type: document.getElementById("f_type").value,
+      amount: document.getElementById("f_amount").value.trim(),
+      currency: document.getElementById("f_cur").value.trim(),
+      date: document.getElementById("f_date").value,
+      description: document.getElementById("f_desc").value.trim(),
+      attachment: ""
+    };
+    if(!row.amount) return UI.toast("Заполни сумму");
+    queueOp({ sheet:"Transactions", action:"upsert", row });
+    upsertLocal("Transactions", row);
+    UI.closeModal(); render();
+  },
+};
+
+document.getElementById("btnLoad").onclick = async ()=>{
+  try{ await loadAll(); } catch(e){ UI.toast("Ошибка загрузки: " + (e.message||e)); }
+};
+document.getElementById("btnSync").onclick = async ()=>{
+  try{ await syncQueue(); } catch(e){ UI.toast("Ошибка синка: " + (e.message||e)); }
+};
+
 loadSettings();
 render();
-
 </script>
-
 </body>
 </html>
