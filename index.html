@@ -97,7 +97,7 @@
 
 <script>
 const SHEETS = ["Clients","Projects","Tasks","Transactions","Payouts","Team","UnitTypes","ProjectTypes","SplitRulesDefault","Templates","Access","AuditLog"];
-const LS_KEY = "wortex_os_settings_v2";
+const LS_KEY = "wortex_os_settings_v3";
 
 const State = {
   settings: { apiUrl: "", role: "Team", token: "", actor: "" },
@@ -215,7 +215,7 @@ async function apiPost(op){
   if(!State.settings.apiUrl) throw new Error("API URL не задан");
   const res = await fetch(State.settings.apiUrl, {
     method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" }, // важно: без CORS-preflight
+    headers:{ "Content-Type":"text/plain;charset=utf-8" }, // важно: без preflight
     body: JSON.stringify({
       ...op,
       token: State.settings.token || "",
@@ -277,6 +277,7 @@ function upsertLocal(sheetName, rowObj){
   const idField = headers[0];
   const idVal = rowObj[idField];
   if(!idVal) return;
+
   let idx = -1;
   for(let i=1;i<grid.length;i++){
     if(String(grid[i][0])===String(idVal)){ idx = i; break; }
@@ -305,7 +306,7 @@ function deadlineClass(due){
   return "";
 }
 function sum(arr){ return arr.reduce((a,b)=>a+(Number(b)||0),0); }
-function currencyFmt(n, cur=""){ const x=Number(n)||0; return (cur?cur+" ":"") + x.toFixed(2); }
+function currencyFmt(n){ const x=Number(n)||0; return x.toFixed(2); }
 function escapeHtml(s){ return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 function escapeAttr(s){ return escapeHtml(s).replaceAll('"',"&quot;"); }
 
@@ -337,10 +338,10 @@ function renderDashboard(){
 
   return `
     <div class="kpi">
-      <div class="card metric"><span class="muted">Просроченные задачи</span><b>${overdue}</b><span class="muted">нужно закрыть срочно</span></div>
-      <div class="card metric"><span class="muted">Задачи на проверке</span><b>${inReview}</b><span class="muted">review bottleneck</span></div>
-      <div class="card metric"><span class="muted">Красные проекты</span><b>${redProjects}</b><span class="muted">требуют внимания</span></div>
-      <div class="card metric"><span class="muted">Перегруз команды</span><b>${overload}</b><span class="muted">людей &gt;80%</span></div>
+      <div class="card metric"><span class="muted">Просроченные задачи</span><b>${overdue}</b></div>
+      <div class="card metric"><span class="muted">Задачи на проверке</span><b>${inReview}</b></div>
+      <div class="card metric"><span class="muted">Красные проекты</span><b>${redProjects}</b></div>
+      <div class="card metric"><span class="muted">Перегруз команды</span><b>${overload}</b></div>
     </div>
 
     <div class="sep"></div>
@@ -354,9 +355,6 @@ function renderDashboard(){
           <button class="btn primary" onclick="Actions.openAddTask()">+ Задача</button>
           ${(State.settings.role.trim()==="Team") ? "" : `<button class="btn primary" onclick="Actions.openAddTx()">+ Операция</button>`}
         </div>
-        <p class="muted small" style="margin-top:10px">
-          После добавления нажми “Синхронизировать”.
-        </p>
       </div>
 
       <div class="card">
@@ -366,9 +364,6 @@ function renderDashboard(){
           <span class="pill">Расход (EUR): <b>${currencyFmt(monthExpense)}</b></span>
           <span class="pill">Профит (EUR): <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
         </div>
-        <p class="muted small" style="margin-top:10px">
-          Team не видит “Финансы”. PM/Founder должны указать токен в “Настройки”.
-        </p>
       </div>
     </div>
   `;
@@ -488,7 +483,6 @@ function renderTasks(){
         <h3 style="margin:0">Задачи</h3>
         <button class="btn primary" onclick="Actions.openAddTask()">+ Добавить задачу</button>
       </div>
-      <p class="muted">Подсветка дедлайнов: красный — просрочено, жёлтый — 48 часов до дедлайна.</p>
       <table>
         <thead><tr>
           <th>Задача</th><th>Исполнитель</th><th>Статус</th><th>Дедлайн</th><th>Юниты</th><th></th>
@@ -500,18 +494,33 @@ function renderTasks(){
 }
 
 function renderFinance(){
-  const tx = sheetToObjects("Transactions");
+  const role = (State.settings.role || "Team").trim();
+  const txAll = sheetToObjects("Transactions").filter(x => String(x.transaction_id||"").trim() !== "");
   const projects = sheetToObjects("Projects");
+  const projMap = Object.fromEntries(projects.map(p=>[p.project_id, p]));
 
-  // пробуем считать в EUR по amount_eur (если таблица настроена)
+  // Summary (всё время, EUR) — берём вычисленные колонки из Sheets
+  const cash = sum(txAll.map(x=>Number(x.cash_delta_eur)||0));
+  const bank = sum(txAll.map(x=>Number(x.bank_10)||0));
+  const payrollPool = sum(txAll.map(x=>Number(x.payroll_50)||0));
+  const foundersPool = sum(txAll.map(x=>Number(x.founders_40)||0));
+  const loanLuter = sum(txAll.map(x=>Number(x.loan_delta_luter)||0));
+  const loanVitor = sum(txAll.map(x=>Number(x.loan_delta_vitor)||0));
+
+  const totalIncome = sum(txAll.filter(x=>x.type==="income").map(x=>Number(x.amount_eur)||0));
+  const totalExpense = sum(txAll.filter(x=>x.type==="expense").map(x=>Number(x.amount_eur)||0));
+  const netProfit = totalIncome - totalExpense;
+
+  // Month summary
   const monthKey = shortDate(new Date()).slice(0,7);
-  const monthIncome = sum(tx.filter(x=>x.type==="income" && String(x.date).slice(0,7)===monthKey).map(x=>Number(x.amount_eur)||0));
-  const monthExpense = sum(tx.filter(x=>x.type==="expense" && String(x.date).slice(0,7)===monthKey).map(x=>Number(x.amount_eur)||0));
+  const monthIncome = sum(txAll.filter(x=>x.type==="income" && String(x.date).slice(0,7)===monthKey).map(x=>Number(x.amount_eur)||0));
+  const monthExpense = sum(txAll.filter(x=>x.type==="expense" && String(x.date).slice(0,7)===monthKey).map(x=>Number(x.amount_eur)||0));
 
-  const rows = tx
+  const rows = txAll
     .sort((a,b)=> String(b.date||"").localeCompare(String(a.date||"")))
+    .slice(0,150)
     .map(x=>{
-      const p = projects.find(p=>p.project_id===x.project_id);
+      const p = projMap[x.project_id];
       return `
         <tr>
           <td>${escapeHtml(shortDate(x.date))}</td>
@@ -528,11 +537,15 @@ function renderFinance(){
       `;
     }).join("");
 
+  const foundersHtml = (role==="Founder")
+    ? `<span class="pill">Founders (40%): <b>${currencyFmt(foundersPool)}</b></span>`
+    : ``; // PM видит финансы, но не видит founders pool
+
   return `
     <div class="grid">
       <div class="card">
         <div class="row" style="align-items:center;justify-content:space-between">
-          <h3 style="margin:0">Операции</h3>
+          <h3 style="margin:0">Операции (последние 150)</h3>
           <button class="btn primary" onclick="Actions.openAddTx()">+ Добавить операцию</button>
         </div>
         <table>
@@ -543,17 +556,30 @@ function renderFinance(){
         </table>
       </div>
 
-      <div class="card">
-        <h3>Итог за месяц (${monthKey})</h3>
-        <div class="row">
-          <span class="pill">Доход (EUR): <b>${currencyFmt(monthIncome)}</b></span>
-          <span class="pill">Расход (EUR): <b>${currencyFmt(monthExpense)}</b></span>
-          <span class="pill">Профит (EUR): <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
+      <div>
+        <div class="card">
+          <h3>Итоги (всё время, EUR)</h3>
+          <div class="row">
+            <span class="pill">Cash: <b>${currencyFmt(cash)}</b></span>
+            <span class="pill">Bank (10%): <b>${currencyFmt(bank)}</b></span>
+            ${foundersHtml}
+            <span class="pill">Payroll (50%): <b>${currencyFmt(payrollPool)}</b></span>
+            <span class="pill">Loan Luter: <b>${currencyFmt(loanLuter)}</b></span>
+            <span class="pill">Loan Vitor: <b>${currencyFmt(loanVitor)}</b></span>
+            <span class="pill">Net Profit: <b>${currencyFmt(netProfit)}</b></span>
+          </div>
+          <div class="sep"></div>
+          <div class="muted small">Чтобы всё обновилось: “Синхронизировать” → “Загрузить данные”.</div>
         </div>
-        <div class="sep"></div>
-        <p class="muted small">
-          Если видишь “EUR: пусто” — проверь, что в Google Sheets в Transactions заполнены формулы и курс.
-        </p>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Итог за месяц (${monthKey})</h3>
+          <div class="row">
+            <span class="pill">Доход: <b>${currencyFmt(monthIncome)}</b></span>
+            <span class="pill">Расход: <b>${currencyFmt(monthExpense)}</b></span>
+            <span class="pill">Профит: <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -601,7 +627,7 @@ function renderTemplates(){
   return `
     <div class="card">
       <h3>Шаблоны</h3>
-      <p class="muted">Шаблоны лежат в листе Templates. Следующий шаг: кнопка “Создать проект по шаблону”.</p>
+      <p class="muted">Шаблоны лежат в листе Templates.</p>
     </div>
   `;
 }
@@ -611,7 +637,7 @@ function renderRoutines(){
   let r = { daily:{}, weekly:{}, monthly:{} };
   try{ const raw = localStorage.getItem(key); if(raw) r = JSON.parse(raw); }catch(e){}
 
-  const Daily = ["Просроченные задачи","Review bottleneck","Красные проекты","Финансы (если Founder/PM)","1 стратегическая задача дня"];
+  const Daily = ["Просроченные задачи","Review bottleneck","Красные проекты","1 стратегическая задача дня"];
   function box(list, group){
     return `
       <div class="card">
@@ -632,7 +658,7 @@ function renderRoutines(){
       </div>
     `;
   }
-  return `<div class="grid">${box(Daily,"Daily")}${box(["Статусы проектов","Загрузка команды","Метрики/отчёты","Финансы","1 решение недели"],"Weekly")}</div>`;
+  return `<div class="grid">${box(Daily,"Daily")}${box(["Статусы проектов","Загрузка команды","Метрики/отчёты","1 решение недели"],"Weekly")}</div>`;
 }
 
 function renderSettings(){
@@ -644,11 +670,10 @@ function renderSettings(){
   return `
     <div class="card">
       <h3>Настройки</h3>
-      <p class="muted">Team не видит Финансы. PM/Founder вставляют токен, чтобы синкать Transactions/Payouts.</p>
       <div class="form">
         <div>
           <label class="muted small">Apps Script URL (/exec)</label>
-          <input class="input" id="apiUrl" value="${escapeAttr(apiUrl)}" placeholder="https://script.google.com/macros/s/.../exec">
+          <input class="input" id="apiUrl" value="${escapeAttr(apiUrl)}">
         </div>
         <div>
           <label class="muted small">Роль</label>
@@ -660,11 +685,11 @@ function renderSettings(){
         </div>
         <div>
           <label class="muted small">Токен</label>
-          <input type="password" class="input" id="uiToken" value="${escapeAttr(token)}" placeholder="Введите токен доступа">
+          <input type="password" class="input" id="uiToken" value="${escapeAttr(token)}">
         </div>
         <div>
           <label class="muted small">Имя (для логов)</label>
-          <input class="input" id="uiActor" value="${escapeAttr(actor)}" placeholder="Luter / Vitor / Liza">
+          <input class="input" id="uiActor" value="${escapeAttr(actor)}">
         </div>
       </div>
 
@@ -721,7 +746,7 @@ const Actions = {
       <h3>Добавить клиента</h3>
       <div class="form">
         <div><label class="muted small">Имя клиента</label><input class="input" id="c_name"></div>
-        <div><label class="muted small">Платформа</label><input class="input" id="c_platform" placeholder="YouTube / TikTok / Instagram"></div>
+        <div><label class="muted small">Платформа</label><input class="input" id="c_platform"></div>
         <div><label class="muted small">Статус</label>
           <select class="input" id="c_status"><option>Onboarding</option><option selected>Active</option><option>Paused</option><option>Churned</option></select>
         </div>
@@ -794,13 +819,13 @@ const Actions = {
           <select class="input" id="p_client">${clients.map(c=>`<option value="${escapeAttr(c.client_id)}">${escapeHtml(c.client_name)}</option>`).join("")}</select>
         </div>
         <div><label class="muted small">Название проекта</label><input class="input" id="p_name"></div>
-        <div><label class="muted small">Тип</label><input class="input" id="p_type" placeholder="YouTube / TikTok / ..."></div>
+        <div><label class="muted small">Тип</label><input class="input" id="p_type"></div>
         <div><label class="muted small">Проверяющий</label><input class="input" id="p_reviewer" list="teamList"></div>
         <datalist id="teamList">${team.map(x=>`<option value="${escapeAttr(x.person)}">`).join("")}</datalist>
         <div><label class="muted small">Статус</label>
           <select class="input" id="p_status"><option>Green</option><option>Yellow</option><option>Red</option></select>
         </div>
-        <div><label class="muted small">Юнитов/нед</label><input class="input" id="p_weekly" placeholder="15"></div>
+        <div><label class="muted small">Юнитов/нед</label><input class="input" id="p_weekly"></div>
         <div style="grid-column:1/-1"><label class="muted small">KPI</label><input class="input" id="p_kpi"></div>
         <div><label class="muted small">Старт</label><input class="input" id="p_start" type="date"></div>
         <div><label class="muted small">Цель дата</label><input class="input" id="p_target" type="date"></div>
@@ -899,9 +924,9 @@ const Actions = {
         <div><label class="muted small">Приоритет</label><select class="input" id="t_priority"><option>P1</option><option selected>P2</option><option>P3</option></select></div>
         <div><label class="muted small">Статус</label><select class="input" id="t_status"><option>To do</option><option>Doing</option><option>Review</option><option>Done</option></select></div>
         <div><label class="muted small">Дедлайн</label><input class="input" id="t_due" type="date"></div>
-        <div><label class="muted small">Юниты</label><input class="input" id="t_units" placeholder="число"></div>
+        <div><label class="muted small">Юниты</label><input class="input" id="t_units"></div>
         <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="t_notes"></textarea></div>
-        <div style="grid-column:1/-1"><label class="muted small">Вложения</label><input class="input" id="t_attach" placeholder="ссылка"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Вложения</label><input class="input" id="t_attach"></div>
       </div>
       <div class="row" style="justify-content:flex-end;margin-top:10px">
         <button class="btn primary" onclick="Actions.saveTaskNew()">Сохранить</button>
@@ -987,23 +1012,20 @@ const Actions = {
     render();
   },
 
-  // Финансы — новая форма под твою таблицу Transactions
   openAddTx(){
     const projects = sheetToObjects("Projects");
     UI.openModal(`
       <h3>Добавить операцию</h3>
-      <p class="muted small">Все расчёты идут в EUR. Для USD/UAH укажи курс к EUR на момент операции.</p>
-
       <div class="form">
         <div>
           <label class="muted small">Тип</label>
           <select class="input" id="f_type">
-            <option value="income">income (оплата клиента)</option>
-            <option value="expense">expense (расход)</option>
-            <option value="founder_loan">founder_loan (вложил со своих)</option>
-            <option value="founder_repay">founder_repay (вернули фаундеру)</option>
-            <option value="payout_founders">payout_founders (вывод founders)</option>
-            <option value="payout_staff">payout_staff (выплата сотруднику)</option>
+            <option value="income">income</option>
+            <option value="expense">expense</option>
+            <option value="founder_loan">founder_loan</option>
+            <option value="founder_repay">founder_repay</option>
+            <option value="payout_founders">payout_founders</option>
+            <option value="payout_staff">payout_staff</option>
           </select>
         </div>
 
@@ -1025,7 +1047,7 @@ const Actions = {
           </select>
         </div>
 
-        <div><label class="muted small">Курс к EUR (вручную)</label><input class="input" id="f_rate"></div>
+        <div><label class="muted small">Курс к EUR</label><input class="input" id="f_rate"></div>
 
         <div><label class="muted small">Дата</label><input class="input" id="f_date" type="date" value="${shortDate(new Date())}"></div>
 
@@ -1038,22 +1060,23 @@ const Actions = {
           </select>
         </div>
 
-        <div><label class="muted small">Кому ушло (paid_to)</label><input class="input" id="f_paid_to" list="paidToList">
-
-<datalist id="paidToList">
-  <option value="Wortex">
-  <option value="Rex">
-  <option value="Luter">
-  <option value="Vitor">
-  <option value="Contractor">
-  <option value="Service">
-  <option value="Ads">
-  <option value="Tools">
-  <option value="Other">
-</datalist></div>
+        <div>
+          <label class="muted small">Кому ушло (paid_to)</label>
+          <input class="input" id="f_paid_to" list="paidToList">
+          <datalist id="paidToList">
+            <option value="Wortex">
+            <option value="Rex">
+            <option value="Luter">
+            <option value="Vitor">
+            <option value="Contractor">
+            <option value="Service">
+            <option value="Ads">
+            <option value="Tools">
+            <option value="Other">
+          </datalist>
+        </div>
 
         <div style="grid-column:1/-1"><label class="muted small">Клиент (имя)</label><input class="input" id="f_client_name"></div>
-
         <div style="grid-column:1/-1"><label class="muted small">Описание</label><input class="input" id="f_desc"></div>
       </div>
 
@@ -1062,7 +1085,7 @@ const Actions = {
       </div>
     `);
 
-    setTimeout(()=>Actions.onCurrencyChange(), 0);
+    setTimeout(()=>Actions.onCurrencyChange(),0);
   },
 
   onCurrencyChange(){
@@ -1090,7 +1113,7 @@ const Actions = {
     };
 
     if(!row.amount) return UI.toast("Заполни сумму");
-    if(!row.fx_rate_to_eur) return UI.toast("Заполни курс к EUR");
+    if(!row.fx_rate_to_eur) return UI.toast("Заполни курс");
 
     queueOp({ sheet:"Transactions", action:"upsert", row });
     upsertLocal("Transactions", row);
@@ -1110,4 +1133,3 @@ render();
 </script>
 </body>
 </html>
-
