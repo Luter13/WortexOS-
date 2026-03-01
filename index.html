@@ -1014,7 +1014,7 @@ const Actions = {
           </select>
         </div>
 
-        <div><label class="muted small">Сумма</label><input class="input" id="f_amount" placeholder="например 500"></div>
+        <div><label class="muted small">Сумма</label><input class="input" id="f_amount"></div>
 
         <div>
           <label class="muted small">Валюта</label>
@@ -1025,7 +1025,7 @@ const Actions = {
           </select>
         </div>
 
-        <div><label class="muted small">Курс к EUR (вручную)</label><input class="input" id="f_rate" placeholder="EUR=1, USD=0.92, UAH=0.024"></div>
+        <div><label class="muted small">Курс к EUR (вручную)</label><input class="input" id="f_rate"></div>
 
         <div><label class="muted small">Дата</label><input class="input" id="f_date" type="date" value="${shortDate(new Date())}"></div>
 
@@ -1038,11 +1038,23 @@ const Actions = {
           </select>
         </div>
 
-        <div><label class="muted small">Кому ушло (paid_to)</label><input class="input" id="f_paid_to" placeholder="Wortex / Rex / сервис / подрядчик"></div>
+        <div><label class="muted small">Кому ушло (paid_to)</label><input class="input" id="f_paid_to" list="paidToList">
 
-        <div style="grid-column:1/-1"><label class="muted small">Клиент (имя)</label><input class="input" id="f_client_name" placeholder="Анна / Заряна / ..."></div>
+<datalist id="paidToList">
+  <option value="Wortex">
+  <option value="Rex">
+  <option value="Luter">
+  <option value="Vitor">
+  <option value="Contractor">
+  <option value="Service">
+  <option value="Ads">
+  <option value="Tools">
+  <option value="Other">
+</datalist></div>
 
-        <div style="grid-column:1/-1"><label class="muted small">Описание</label><input class="input" id="f_desc" placeholder="оплата / подписка / монтаж / и т.д."></div>
+        <div style="grid-column:1/-1"><label class="muted small">Клиент (имя)</label><input class="input" id="f_client_name"></div>
+
+        <div style="grid-column:1/-1"><label class="muted small">Описание</label><input class="input" id="f_desc"></div>
       </div>
 
       <div class="row" style="justify-content:flex-end;margin-top:10px">
@@ -1098,3 +1110,4 @@ render();
 </script>
 </body>
 </html>
+
