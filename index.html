@@ -51,7 +51,6 @@
     .form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     @media (max-width:720px){.form{grid-template-columns:1fr}}
     .sep{height:1px;background:var(--line);margin:10px 0}
-    .chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:12px}
     .status{font-weight:700}
     .s-ok{color:var(--ok)} .s-warn{color:var(--warn)} .s-bad{color:var(--bad)}
     .deadline.bad{color:var(--bad);font-weight:700}
@@ -143,7 +142,7 @@ function updateConnLabel(){
 }
 
 function visibleTabs(){
-  const role = State.settings.role || "Team";
+  const role = (State.settings.role || "Team").trim();
   return TabsAll.filter(t=>{
     if(role==="Team" && t==="Финансы") return false;
     return true;
@@ -216,12 +215,12 @@ async function apiPost(op){
   if(!State.settings.apiUrl) throw new Error("API URL не задан");
   const res = await fetch(State.settings.apiUrl, {
     method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    headers:{ "Content-Type":"text/plain;charset=utf-8" }, // важно: без CORS-preflight
     body: JSON.stringify({
       ...op,
       token: State.settings.token || "",
       actor: (State.settings.actor || "").trim() || "Unknown",
-      actorRole: State.settings.role || "Team",
+      actorRole: (State.settings.role || "Team").trim(),
     })
   });
   const json = await res.json();
@@ -305,7 +304,6 @@ function deadlineClass(due){
   if(diff <= 48*3600*1000) return "warn";
   return "";
 }
-
 function sum(arr){ return arr.reduce((a,b)=>a+(Number(b)||0),0); }
 function currencyFmt(n, cur=""){ const x=Number(n)||0; return (cur?cur+" ":"") + x.toFixed(2); }
 function escapeHtml(s){ return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
@@ -322,8 +320,8 @@ function renderDashboard(){
   const redProjects = projects.filter(p=>String(p.status).toLowerCase()==="red").length;
 
   const monthKey = shortDate(new Date()).slice(0,7);
-  const monthIncome = sum(tx.filter(x=>x.type==="income" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount));
-  const monthExpense = sum(tx.filter(x=>x.type==="expense" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount));
+  const monthIncome = sum(tx.filter(x=>x.type==="income" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount_eur||0));
+  const monthExpense = sum(tx.filter(x=>x.type==="expense" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount_eur||0));
 
   const openTasks = tasks.filter(t=>t.status!=="Done");
   const unitsByAssignee = {};
@@ -354,7 +352,7 @@ function renderDashboard(){
           <button class="btn primary" onclick="Actions.openAddClient()">+ Клиент</button>
           <button class="btn primary" onclick="Actions.openAddProject()">+ Проект</button>
           <button class="btn primary" onclick="Actions.openAddTask()">+ Задача</button>
-          ${(State.settings.role==="Team") ? "" : `<button class="btn primary" onclick="Actions.openAddTx()">+ Платёж/расход</button>`}
+          ${(State.settings.role.trim()==="Team") ? "" : `<button class="btn primary" onclick="Actions.openAddTx()">+ Операция</button>`}
         </div>
         <p class="muted small" style="margin-top:10px">
           После добавления нажми “Синхронизировать”.
@@ -364,9 +362,9 @@ function renderDashboard(){
       <div class="card">
         <h3>Финансы за месяц (${monthKey})</h3>
         <div class="row">
-          <span class="pill">Доход: <b>${currencyFmt(monthIncome)}</b></span>
-          <span class="pill">Расход: <b>${currencyFmt(monthExpense)}</b></span>
-          <span class="pill">Профит: <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
+          <span class="pill">Доход (EUR): <b>${currencyFmt(monthIncome)}</b></span>
+          <span class="pill">Расход (EUR): <b>${currencyFmt(monthExpense)}</b></span>
+          <span class="pill">Профит (EUR): <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
         </div>
         <p class="muted small" style="margin-top:10px">
           Team не видит “Финансы”. PM/Founder должны указать токен в “Настройки”.
@@ -505,9 +503,10 @@ function renderFinance(){
   const tx = sheetToObjects("Transactions");
   const projects = sheetToObjects("Projects");
 
+  // пробуем считать в EUR по amount_eur (если таблица настроена)
   const monthKey = shortDate(new Date()).slice(0,7);
-  const monthIncome = sum(tx.filter(x=>x.type==="income" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount));
-  const monthExpense = sum(tx.filter(x=>x.type==="expense" && String(x.date).slice(0,7)===monthKey).map(x=>x.amount));
+  const monthIncome = sum(tx.filter(x=>x.type==="income" && String(x.date).slice(0,7)===monthKey).map(x=>Number(x.amount_eur)||0));
+  const monthExpense = sum(tx.filter(x=>x.type==="expense" && String(x.date).slice(0,7)===monthKey).map(x=>Number(x.amount_eur)||0));
 
   const rows = tx
     .sort((a,b)=> String(b.date||"").localeCompare(String(a.date||"")))
@@ -516,9 +515,11 @@ function renderFinance(){
       return `
         <tr>
           <td>${escapeHtml(shortDate(x.date))}</td>
-          <td>${escapeHtml(p?.project_name||"")}</td>
-          <td>${escapeHtml(x.type)}</td>
-          <td><b>${escapeHtml(currencyFmt(x.amount, x.currency))}</b></td>
+          <td>${escapeHtml(p?.project_name||x.project_id||"")}</td>
+          <td>${escapeHtml(x.type||"")}</td>
+          <td><b>${escapeHtml(x.amount||"")} ${escapeHtml(x.currency||"")}</b><div class="muted small">EUR: ${escapeHtml(x.amount_eur||"")}</div></td>
+          <td>${escapeHtml(x.client_name||"")}</td>
+          <td>${escapeHtml(x.paid_by||"")} → ${escapeHtml(x.paid_to||"")}</td>
           <td>${escapeHtml(x.description||"")}</td>
           <td class="right">
             <button class="btn danger" onclick="Actions.deleteRow('Transactions','${x.transaction_id}')">Удалить</button>
@@ -531,26 +532,28 @@ function renderFinance(){
     <div class="grid">
       <div class="card">
         <div class="row" style="align-items:center;justify-content:space-between">
-          <h3 style="margin:0">Транзакции</h3>
-          <button class="btn primary" onclick="Actions.openAddTx()">+ Доход/Расход</button>
+          <h3 style="margin:0">Операции</h3>
+          <button class="btn primary" onclick="Actions.openAddTx()">+ Добавить операцию</button>
         </div>
         <table>
           <thead><tr>
-            <th>Дата</th><th>Проект</th><th>Тип</th><th>Сумма</th><th>Описание</th><th></th>
+            <th>Дата</th><th>Проект</th><th>Тип</th><th>Сумма</th><th>Клиент</th><th>Кто→Кому</th><th>Описание</th><th></th>
           </tr></thead>
-          <tbody>${rows || `<tr><td colspan="6" class="muted">Пока пусто</td></tr>`}</tbody>
+          <tbody>${rows || `<tr><td colspan="8" class="muted">Пока пусто</td></tr>`}</tbody>
         </table>
       </div>
 
       <div class="card">
         <h3>Итог за месяц (${monthKey})</h3>
         <div class="row">
-          <span class="pill">Доход: <b>${currencyFmt(monthIncome)}</b></span>
-          <span class="pill">Расход: <b>${currencyFmt(monthExpense)}</b></span>
-          <span class="pill">Профит: <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
+          <span class="pill">Доход (EUR): <b>${currencyFmt(monthIncome)}</b></span>
+          <span class="pill">Расход (EUR): <b>${currencyFmt(monthExpense)}</b></span>
+          <span class="pill">Профит (EUR): <b>${currencyFmt(monthIncome-monthExpense)}</b></span>
         </div>
         <div class="sep"></div>
-        <p class="muted small">Если видишь ошибку “нужен токен” — зайди в “Настройки” и вставь токен Founder/PM.</p>
+        <p class="muted small">
+          Если видишь “EUR: пусто” — проверь, что в Google Sheets в Transactions заполнены формулы и курс.
+        </p>
       </div>
     </div>
   `;
@@ -598,9 +601,7 @@ function renderTemplates(){
   return `
     <div class="card">
       <h3>Шаблоны</h3>
-      <p class="muted">
-        Шаблоны лежат в листе Templates. Следующий шаг: кнопка “Создать проект по шаблону”.
-      </p>
+      <p class="muted">Шаблоны лежат в листе Templates. Следующий шаг: кнопка “Создать проект по шаблону”.</p>
     </div>
   `;
 }
@@ -636,7 +637,7 @@ function renderRoutines(){
 
 function renderSettings(){
   const apiUrl = State.settings.apiUrl || "";
-  const role = State.settings.role || "Team";
+  const role = (State.settings.role || "Team").trim();
   const token = State.settings.token || "";
   const actor = State.settings.actor || "";
 
@@ -659,11 +660,11 @@ function renderSettings(){
         </div>
         <div>
           <label class="muted small">Токен</label>
-          <input class="input" id="uiToken" value="${escapeAttr(token)}" placeholder="Введите токен доступа">
+          <input type="password" class="input" id="uiToken" value="${escapeAttr(token)}" placeholder="Введите токен доступа">
         </div>
         <div>
           <label class="muted small">Имя (для логов)</label>
-          <input class="input" id="uiActor" value="${escapeAttr(actor)}" placeholder="Лиза / Виталик / ...">
+          <input class="input" id="uiActor" value="${escapeAttr(actor)}" placeholder="Luter / Vitor / Liza">
         </div>
       </div>
 
@@ -681,7 +682,7 @@ function renderSettings(){
 const Actions = {
   saveSettings(){
     State.settings.apiUrl = document.getElementById("apiUrl").value.trim();
-    State.settings.role = document.getElementById("uiRole").value;
+    State.settings.role = document.getElementById("uiRole").value.trim();
     State.settings.token = document.getElementById("uiToken").value.trim();
     State.settings.actor = document.getElementById("uiActor").value.trim();
     saveSettings();
@@ -884,7 +885,6 @@ const Actions = {
   openAddTask(projectId=""){
     const projects = sheetToObjects("Projects");
     const team = sheetToObjects("Team");
-    const units = sheetToObjects("UnitTypes").filter(u=>String(u.is_active).toUpperCase()==="TRUE");
     UI.openModal(`
       <h3>Добавить задачу</h3>
       <div class="form">
@@ -899,13 +899,7 @@ const Actions = {
         <div><label class="muted small">Приоритет</label><select class="input" id="t_priority"><option>P1</option><option selected>P2</option><option>P3</option></select></div>
         <div><label class="muted small">Статус</label><select class="input" id="t_status"><option>To do</option><option>Doing</option><option>Review</option><option>Done</option></select></div>
         <div><label class="muted small">Дедлайн</label><input class="input" id="t_due" type="date"></div>
-        <div><label class="muted small">Юнит (тип)</label>
-          <select class="input" id="t_unitType" onchange="Actions.applyUnitValue()">
-            <option value="">— выбрать —</option>
-            ${units.map(u=>`<option value="${escapeAttr(u.unit_value)}">${escapeHtml(u.unit_name)} (=${escapeHtml(u.unit_value)})</option>`).join("")}
-          </select>
-        </div>
-        <div><label class="muted small">Юниты</label><input class="input" id="t_units"></div>
+        <div><label class="muted small">Юниты</label><input class="input" id="t_units" placeholder="число"></div>
         <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="t_notes"></textarea></div>
         <div style="grid-column:1/-1"><label class="muted small">Вложения</label><input class="input" id="t_attach" placeholder="ссылка"></div>
       </div>
@@ -913,10 +907,6 @@ const Actions = {
         <button class="btn primary" onclick="Actions.saveTaskNew()">Сохранить</button>
       </div>
     `);
-  },
-  applyUnitValue(){
-    const v = document.getElementById("t_unitType").value;
-    if(v) document.getElementById("t_units").value = v;
   },
   saveTaskNew(){
     const row = {
@@ -997,39 +987,99 @@ const Actions = {
     render();
   },
 
+  // Финансы — новая форма под твою таблицу Transactions
   openAddTx(){
     const projects = sheetToObjects("Projects");
     UI.openModal(`
-      <h3>Добавить доход/расход</h3>
+      <h3>Добавить операцию</h3>
+      <p class="muted small">Все расчёты идут в EUR. Для USD/UAH укажи курс к EUR на момент операции.</p>
+
       <div class="form">
-        <div><label class="muted small">Проект</label>
-          <select class="input" id="f_project">${projects.map(p=>`<option value="${escapeAttr(p.project_id)}">${escapeHtml(p.project_name)}</option>`).join("")}</select>
+        <div>
+          <label class="muted small">Тип</label>
+          <select class="input" id="f_type">
+            <option value="income">income (оплата клиента)</option>
+            <option value="expense">expense (расход)</option>
+            <option value="founder_loan">founder_loan (вложил со своих)</option>
+            <option value="founder_repay">founder_repay (вернули фаундеру)</option>
+            <option value="payout_founders">payout_founders (вывод founders)</option>
+            <option value="payout_staff">payout_staff (выплата сотруднику)</option>
+          </select>
         </div>
-        <div><label class="muted small">Тип</label>
-          <select class="input" id="f_type"><option value="income">income</option><option value="expense">expense</option></select>
+
+        <div>
+          <label class="muted small">Проект</label>
+          <select class="input" id="f_project">
+            ${projects.map(p=>`<option value="${escapeAttr(p.project_id)}">${escapeHtml(p.project_name)} (${escapeHtml(p.project_id)})</option>`).join("")}
+          </select>
         </div>
-        <div><label class="muted small">Сумма</label><input class="input" id="f_amount"></div>
-        <div><label class="muted small">Валюта</label><input class="input" id="f_cur" value="EUR"></div>
+
+        <div><label class="muted small">Сумма</label><input class="input" id="f_amount" placeholder="например 500"></div>
+
+        <div>
+          <label class="muted small">Валюта</label>
+          <select class="input" id="f_cur" onchange="Actions.onCurrencyChange()">
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+            <option value="UAH">UAH</option>
+          </select>
+        </div>
+
+        <div><label class="muted small">Курс к EUR (вручную)</label><input class="input" id="f_rate" placeholder="EUR=1, USD=0.92, UAH=0.024"></div>
+
         <div><label class="muted small">Дата</label><input class="input" id="f_date" type="date" value="${shortDate(new Date())}"></div>
-        <div style="grid-column:1/-1"><label class="muted small">Описание</label><input class="input" id="f_desc"></div>
+
+        <div>
+          <label class="muted small">Кто оплатил (paid_by)</label>
+          <select class="input" id="f_paid_by">
+            <option value="client">client</option>
+            <option value="Luter">Luter</option>
+            <option value="Vitor">Vitor</option>
+          </select>
+        </div>
+
+        <div><label class="muted small">Кому ушло (paid_to)</label><input class="input" id="f_paid_to" placeholder="Wortex / Rex / сервис / подрядчик"></div>
+
+        <div style="grid-column:1/-1"><label class="muted small">Клиент (имя)</label><input class="input" id="f_client_name" placeholder="Анна / Заряна / ..."></div>
+
+        <div style="grid-column:1/-1"><label class="muted small">Описание</label><input class="input" id="f_desc" placeholder="оплата / подписка / монтаж / и т.д."></div>
       </div>
+
       <div class="row" style="justify-content:flex-end;margin-top:10px">
         <button class="btn primary" onclick="Actions.saveTxNew()">Сохранить</button>
       </div>
     `);
+
+    setTimeout(()=>Actions.onCurrencyChange(), 0);
   },
+
+  onCurrencyChange(){
+    const curEl = document.getElementById("f_cur");
+    const rateEl = document.getElementById("f_rate");
+    if(!curEl || !rateEl) return;
+    if(curEl.value === "EUR") rateEl.value = "1";
+  },
+
   saveTxNew(){
     const row = {
       transaction_id: genId("F"),
       project_id: document.getElementById("f_project").value,
       type: document.getElementById("f_type").value,
       amount: document.getElementById("f_amount").value.trim(),
-      currency: document.getElementById("f_cur").value.trim(),
+      currency: document.getElementById("f_cur").value,
       date: document.getElementById("f_date").value,
       description: document.getElementById("f_desc").value.trim(),
-      attachment: ""
+      attachment: "",
+
+      client_name: document.getElementById("f_client_name").value.trim(),
+      paid_by: document.getElementById("f_paid_by").value,
+      paid_to: document.getElementById("f_paid_to").value.trim(),
+      fx_rate_to_eur: document.getElementById("f_rate").value.trim()
     };
+
     if(!row.amount) return UI.toast("Заполни сумму");
+    if(!row.fx_rate_to_eur) return UI.toast("Заполни курс к EUR");
+
     queueOp({ sheet:"Transactions", action:"upsert", row });
     upsertLocal("Transactions", row);
     UI.closeModal(); render();
@@ -1048,5 +1098,3 @@ render();
 </script>
 </body>
 </html>
-
-
