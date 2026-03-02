@@ -10,6 +10,8 @@
       --bg:#0b0c10; --card:#11131a; --text:#e7e9ee; --muted:#a6adbb; --line:#24283a;
       --ok:#19c37d; --warn:#f4c152; --bad:#ff4d4d; --accent:#6ea8fe; --chip:#1a1f2e;
       --shadow: 0 10px 30px rgba(0,0,0,.35); --r:14px;
+      --btnBlue:#1c2a57;
+      --btnBlueBorder:#2b3a78;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);}
@@ -58,7 +60,8 @@
     }
     .btn.primary{background:var(--accent);border-color:transparent;color:#081018;font-weight:800}
     .btn.ghost{background:transparent}
-    .btn.danger{background:rgba(255,77,77,.12);border-color:rgba(255,77,77,.35)}
+    .btn.danger{background:rgba(255,77,77,.14);border-color:rgba(255,77,77,.35)}
+    .btn.blue{background:rgba(28,42,87,.85);border-color:rgba(43,58,120,.8)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
     .btn.square{
       width:40px;height:40px;
@@ -66,17 +69,18 @@
       justify-content:center;
       border-radius:12px;
     }
+    .btn.icon-sm{
+      width:34px;height:34px;border-radius:10px;padding:0;justify-content:center;
+    }
     .icon{width:18px;height:18px;display:block}
+    .icon-sm svg{width:16px;height:16px}
 
     /* Compact header mode */
     header.compact .wrap{padding-top:10px;padding-bottom:10px}
     header.compact .brand span{display:none}
-    header.compact nav{display:none}            /* вкладки прячем */
-    header.compact .btn:not(.square){display:none} /* прячем текстовые кнопки */
-    header.compact .right{gap:10px}
+    header.compact nav{display:none}
+    header.compact .btn:not(.square){display:none}
     header.compact .burger{display:inline-flex}
-
-    /* Normal header mode */
     .burger{display:none}
 
     /* Dropdown menu when burger opened */
@@ -140,7 +144,7 @@
     .form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     @media (max-width:720px){.form{grid-template-columns:1fr}}
 
-    /* ===== TABLES (DESKTOP) ===== */
+    /* ===== TABLES (DESKTOP) — ровные линии 100% ===== */
     .desktop-only{display:block}
     .mobile-only{display:none}
 
@@ -149,13 +153,12 @@
       overflow:auto;
       -webkit-overflow-scrolling:touch;
       border:1px solid var(--line);
-      border-radius:12px
+      border-radius:12px;
+      background:rgba(17,19,26,.35);
     }
-
     table{
       width:100%;
-      border-collapse:separate;    /* важно: чтобы line на tr работала ровно */
-      border-spacing:0;
+      border-collapse:collapse;   /* ключ к ровным линиям */
       font-size:12.6px;
       table-layout:fixed;
     }
@@ -174,23 +177,38 @@
       overflow:hidden;
       text-overflow:ellipsis;
     }
-    tbody tr{
-      height:44px;
-      /* линия строки на всю ширину */
-      box-shadow: inset 0 -1px 0 var(--line);
-    }
-    tbody tr:hover td{background:rgba(255,255,255,.02)}
     tbody td{
       padding:10px;
       vertical-align:middle;
+      border-bottom:1px solid var(--line); /* линия на всю ширину — для каждого td */
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
+      background:transparent;
+    }
+    tbody tr:hover td{background:rgba(255,255,255,.02)}
+    tbody tr:last-child td{border-bottom:none}
+
+    .actions-cell{ text-align:right; white-space:nowrap; }
+    .actions{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
     }
 
-    .btn.mini{padding:7px 9px;font-size:12px;border-radius:10px}
-    .status{font-weight:800}
-    .s-ok{color:var(--ok)} .s-warn{color:var(--warn)} .s-bad{color:var(--bad)}
+    /* Status dots */
+    .dot{
+      width:10px;height:10px;border-radius:999px;display:inline-block;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.06);
+      margin-right:8px; flex:0 0 auto;
+    }
+    .dot.green{background:var(--ok)}
+    .dot.yellow{background:var(--warn)}
+    .dot.red{background:var(--bad)}
+    .status-wrap{display:inline-flex;align-items:center;gap:0}
+    .status-text{display:none} /* текст green/yellow/red скрываем */
+
     .deadline.bad{color:var(--bad);font-weight:800}
     .deadline.warn{color:var(--warn);font-weight:800}
 
@@ -204,8 +222,8 @@
       .brand{min-width:auto}
       .tab{padding:10px 12px}
       .btn{padding:10px 12px}
-      .btn.mini{padding:10px 12px;font-size:13px}
       .btn.square{width:42px;height:42px;border-radius:14px}
+      .btn.icon-sm{width:36px;height:36px;border-radius:12px}
     }
 
     .m-list{display:flex;flex-direction:column;gap:10px}
@@ -264,10 +282,16 @@
       box-shadow:var(--shadow);
       font-size:13px;
       z-index:100;
+      max-width:92vw;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:120}
     .modal .box{width:min(980px,94vw);max-height:88vh;overflow:auto}
     .modal.show{display:flex}
+
+    .hint{color:var(--muted);font-size:12px;margin-top:6px}
   </style>
 </head>
 
@@ -282,18 +306,15 @@
     <nav id="nav"></nav>
 
     <div class="right">
-      <!-- Burger (виден только в compact) -->
       <button class="btn square burger" id="btnBurger" title="Меню">
         <svg class="icon" viewBox="0 0 24 24" fill="none">
           <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
 
-      <!-- Desktop buttons (with text) -->
       <button class="btn desktop-only" id="btnLoadText">Загрузить данные</button>
       <button class="btn primary desktop-only" id="btnSyncText">Синхронизировать</button>
 
-      <!-- Compact icon buttons -->
       <button class="btn square" id="btnLoadIcon" title="Загрузить данные">
         <svg class="icon" viewBox="0 0 24 24" fill="none">
           <path d="M12 3v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -311,7 +332,6 @@
   </div>
 </header>
 
-<!-- Dropdown menu for burger -->
 <div class="menu-pop" id="menuPop">
   <div class="menu-title">
     <b>Меню</b>
@@ -328,9 +348,11 @@
 
 <div id="modal" class="modal">
   <div class="card box">
-    <div class="right">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div class="muted small" id="modalTitle"></div>
       <button class="btn ghost" onclick="UI.closeModal()">Закрыть</button>
     </div>
+    <div class="sep"></div>
     <div id="modalBody"></div>
   </div>
 </div>
@@ -340,7 +362,7 @@
    CONFIG / STATE
 ======================= */
 const SHEETS = ["Clients","Projects","Tasks","Transactions","Payouts","Team","UnitTypes","ProjectTypes","SplitRulesDefault","Templates","Access","AuditLog"];
-const LS_KEY = "wortex_os_settings_v6";
+const LS_KEY = "wortex_os_settings_final_v1";
 
 const State = {
   settings: { apiUrl: "", role: "Team", token: "", actor: "" },
@@ -356,10 +378,11 @@ const UI = {
     const t = document.getElementById("toast");
     t.textContent = msg;
     t.classList.remove("hidden");
-    setTimeout(()=>t.classList.add("hidden"), 2200);
+    setTimeout(()=>t.classList.add("hidden"), 2300);
   },
   setConn(text){ document.getElementById("connState").textContent = text; },
-  openModal(html){
+  openModal(title, html){
+    document.getElementById("modalTitle").textContent = title || "";
     document.getElementById("modalBody").innerHTML = html;
     document.getElementById("modal").classList.add("show");
   },
@@ -376,7 +399,7 @@ function saveSettings(){
 }
 function updateConnLabel(){
   if(!State.settings.apiUrl) UI.setConn("Не подключено. Укажи URL в “Настройки”.");
-  else UI.setConn(`Подключено. Роль: ${State.settings.role}`);
+  else UI.setConn(`Подключено. Роль: ${State.settings.role} • ${State.settings.actor || "Без имени"}`);
 }
 
 function visibleTabs(){
@@ -394,7 +417,7 @@ function renderNav(){
   menuTabs.innerHTML = "";
 
   visibleTabs().forEach(t=>{
-    const mkBtn = (isMenu=false)=>{
+    const mkBtn = ()=>{
       const b = document.createElement("button");
       b.className = "tab" + (State.activeTab===t ? " active":"");
       b.textContent = t;
@@ -405,8 +428,8 @@ function renderNav(){
       };
       return b;
     };
-    nav.appendChild(mkBtn(false));
-    menuTabs.appendChild(mkBtn(true));
+    nav.appendChild(mkBtn());
+    menuTabs.appendChild(mkBtn());
   });
 }
 
@@ -424,6 +447,24 @@ function render(){
   else if(t==="Шаблоны") page.innerHTML = renderTemplates();
   else if(t==="Чек-листы") page.innerHTML = renderRoutines();
   else if(t==="Настройки") page.innerHTML = renderSettings();
+}
+
+/* =======================
+   ICONS
+======================= */
+function iconTrash(){
+  return `
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M9 3h6m-9 4h12m-1 0-1 15H8L7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M10 11v7M14 11v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+}
+function iconPencil(){
+  return `
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M4 20h4l11-11a2 2 0 0 0 0-3l-1-1a2 2 0 0 0-3 0L4 16v4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M13 6l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
 }
 
 /* =======================
@@ -446,17 +487,51 @@ function sheetToObjects(sheetName){
   if(grid.length === 0) return [];
   const headers = grid[0].map(h => String(h).trim());
   const rows = grid.slice(1);
-  return rows.map(r=>{
-    const o = {};
-    headers.forEach((h,i)=> o[h]= r[i] ?? "");
-    return o;
-  });
+  return rows
+    .filter(r => r && r.some(v => String(v ?? "").trim() !== "")) // убираем пустые строки
+    .map(r=>{
+      const o = {};
+      headers.forEach((h,i)=> o[h]= r[i] ?? "");
+      return o;
+    });
 }
 function sum(arr){ return arr.reduce((a,b)=>a+(Number(b)||0),0); }
 function currencyFmt(n){ const x=Number(n)||0; return x.toFixed(2); }
 function escapeHtml(s){ return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 function escapeAttr(s){ return escapeHtml(s).replaceAll('"',"&quot;"); }
 
+function getHeaders(sheet){
+  return (State.data[sheet]?.[0] || []).map(h=>String(h));
+}
+function idField(sheet){
+  const h = getHeaders(sheet);
+  return h[0] || "id";
+}
+function pick(o, k, def=""){
+  const v = o?.[k];
+  return (v===undefined || v===null) ? def : v;
+}
+function deadlineClass(due){
+  if(!due) return "";
+  const dt = new Date(due);
+  if(isNaN(dt)) return "";
+  const now = new Date();
+  const diff = dt - now;
+  if(diff < 0) return "bad";
+  if(diff <= 48*3600*1000) return "warn";
+  return "";
+}
+function statusDotClass(st){
+  const s = String(st||"").toLowerCase().trim();
+  if(s==="green") return "green";
+  if(s==="yellow") return "yellow";
+  if(s==="red") return "red";
+  return "yellow";
+}
+
+/* =======================
+   API
+======================= */
 async function apiGetAll(){
   if(!State.settings.apiUrl) throw new Error("API URL не задан");
   const res = await fetch(State.settings.apiUrl, { method:"GET" });
@@ -489,6 +564,10 @@ async function loadAll(){
   UI.toast("Данные загружены");
   render();
 }
+
+/* =======================
+   QUEUE / LOCAL APPLY
+======================= */
 function queueOp(op){
   State.dirtyQueue.push(op);
   UI.toast("В очередь синка: " + op.sheet + " / " + op.action);
@@ -509,8 +588,8 @@ function upsertLocal(sheetName, rowObj){
   const grid = State.data[sheetName] || [];
   if(grid.length===0) return;
   const headers = grid[0].map(h=>String(h));
-  const idField = headers[0];
-  const idVal = rowObj[idField];
+  const key = headers[0];
+  const idVal = rowObj[key];
   if(!idVal) return;
 
   let idx = -1;
@@ -529,23 +608,12 @@ function deleteLocal(sheetName, idVal){
     if(String(grid[i][0])===String(idVal)){ grid.splice(i,1); break; }
   }
 }
-function deadlineClass(due){
-  if(!due) return "";
-  const dt = new Date(due);
-  if(isNaN(dt)) return "";
-  const now = new Date();
-  const diff = dt - now;
-  if(diff < 0) return "bad";
-  if(diff <= 48*3600*1000) return "warn";
-  return "";
-}
 
 /* =======================
-   HEADER BEHAVIOR (scroll down -> compact only)
+   HEADER BEHAVIOR
 ======================= */
 const hdr = document.getElementById("hdr");
 let lastY = window.scrollY;
-let compactLocked = false; // once compact, stays until burger toggles open/close? (we keep compact, but user can open menu)
 let menuOpen = false;
 
 function openMenu(){
@@ -556,38 +624,27 @@ function closeMenu(){
   menuOpen = false;
   hdr.classList.remove("menu-open");
 }
-
 function setCompact(on){
   if(on){
     hdr.classList.add("compact");
-    compactLocked = true;
   }else{
     hdr.classList.remove("compact");
-    compactLocked = false;
     closeMenu();
   }
 }
-
 window.addEventListener("scroll", ()=>{
   const y = window.scrollY;
   const down = y > lastY + 6;
-
-  // ВАЖНО: уходим в compact только при скролле вниз
   if(down && y > 40){
-    setCompact(true);
+    setCompact(true); // только вниз
   }
-
   lastY = y;
 });
-
-// Burger toggles menu, but does not change compact state
 document.getElementById("btnBurger").addEventListener("click", ()=>{
   if(!hdr.classList.contains("compact")) return;
   if(menuOpen) closeMenu(); else openMenu();
 });
 document.getElementById("btnMenuClose").addEventListener("click", closeMenu);
-
-// Tap outside menu to close
 document.addEventListener("click", (e)=>{
   if(!hdr.classList.contains("menu-open")) return;
   const pop = document.getElementById("menuPop");
@@ -595,6 +652,481 @@ document.addEventListener("click", (e)=>{
   if(pop.contains(e.target) || burger.contains(e.target)) return;
   closeMenu();
 });
+
+/* =======================
+   MODAL FORMS (CRUD)
+======================= */
+function modalActionsRow({onSaveLabel="Сохранить", onSaveJs=""}){
+  return `
+    <div class="row" style="justify-content:flex-end;margin-top:10px">
+      <button class="btn primary" onclick="${onSaveJs}">${onSaveLabel}</button>
+    </div>`;
+}
+
+function optList(arr, val){
+  return arr.map(x=>`<option value="${escapeAttr(x)}" ${String(x)===String(val)?"selected":""}>${escapeHtml(x)}</option>`).join("");
+}
+function getProjectTypes(){
+  const pt = sheetToObjects("ProjectTypes");
+  if(pt.length) return pt.filter(x=>String(x.is_active).toLowerCase()!=="false").map(x=>x.type_name);
+  return ["YouTube","TikTok","Instagram","Giveaway","AI content","Design","SEO"];
+}
+function getTeamPeople(){
+  return sheetToObjects("Team").map(x=>String(x.person||"").trim()).filter(Boolean);
+}
+function getReviewers(){
+  // по умолчанию тот же список людей
+  return getTeamPeople();
+}
+
+const Forms = {
+  /* ===== CLIENTS ===== */
+  openAddClient(){
+    UI.openModal("Добавить клиента", `
+      <div class="form">
+        <div><label class="muted small">Имя клиента</label><input class="input" id="c_name"></div>
+        <div><label class="muted small">Платформа</label><select class="input" id="c_platform">
+          ${optList(getProjectTypes(), "")}
+        </select></div>
+        <div><label class="muted small">Статус</label><select class="input" id="c_status">
+          ${optList(["onboarding","active","pause","charged"], "active")}
+        </select></div>
+        <div><label class="muted small">Health</label><input class="input" id="c_health"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="c_notes"></textarea></div>
+      </div>
+      ${modalActionsRow({onSaveJs:"Forms.saveClientNew()"})}
+    `);
+  },
+  openEditClient(clientId){
+    const c = sheetToObjects("Clients").find(x=>x.client_id===clientId);
+    if(!c) return UI.toast("Клиент не найден");
+    UI.openModal("Изменить клиента", `
+      <div class="form">
+        <div><label class="muted small">Имя клиента</label><input class="input" id="c_name" value="${escapeAttr(c.client_name||"")}"></div>
+        <div><label class="muted small">Платформа</label><select class="input" id="c_platform">
+          ${optList(getProjectTypes(), c.platform||"")}
+        </select></div>
+        <div><label class="muted small">Статус</label><select class="input" id="c_status">
+          ${optList(["onboarding","active","pause","charged"], c.status||"active")}
+        </select></div>
+        <div><label class="muted small">Health</label><input class="input" id="c_health" value="${escapeAttr(c.health_score||"")}"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="c_notes">${escapeHtml(c.notes||"")}</textarea></div>
+      </div>
+      <div class="hint">ID: ${escapeHtml(c.client_id)}</div>
+      ${modalActionsRow({onSaveJs:`Forms.saveClientEdit('${escapeAttr(c.client_id)}')`})}
+    `);
+  },
+  saveClientNew(){
+    const row = {
+      client_id: genId("C"),
+      client_name: document.getElementById("c_name").value.trim(),
+      platform: document.getElementById("c_platform").value.trim(),
+      status: document.getElementById("c_status").value.trim(),
+      health_score: document.getElementById("c_health").value.trim(),
+      notes: document.getElementById("c_notes").value.trim(),
+      created_at: new Date().toISOString()
+    };
+    if(!row.client_name) return UI.toast("Заполни имя клиента");
+    queueOp({sheet:"Clients", action:"upsert", row});
+    upsertLocal("Clients", row);
+    UI.closeModal(); render();
+  },
+  saveClientEdit(clientId){
+    const c = sheetToObjects("Clients").find(x=>x.client_id===clientId);
+    if(!c) return UI.toast("Клиент не найден");
+    const row = {
+      ...c,
+      client_id: clientId,
+      client_name: document.getElementById("c_name").value.trim(),
+      platform: document.getElementById("c_platform").value.trim(),
+      status: document.getElementById("c_status").value.trim(),
+      health_score: document.getElementById("c_health").value.trim(),
+      notes: document.getElementById("c_notes").value.trim(),
+    };
+    if(!row.client_name) return UI.toast("Заполни имя клиента");
+    queueOp({sheet:"Clients", action:"upsert", row});
+    upsertLocal("Clients", row);
+    UI.closeModal(); render();
+  },
+
+  /* ===== PROJECTS ===== */
+  openAddProject(){
+    const clients = sheetToObjects("Clients");
+    if(!clients.length) return UI.toast("Сначала добавь клиента");
+    UI.openModal("Добавить проект", `
+      <div class="form">
+        <div>
+          <label class="muted small">Клиент</label>
+          <select class="input" id="p_client">
+            ${clients.map(c=>`<option value="${escapeAttr(c.client_id)}">${escapeHtml(c.client_name)} (${escapeHtml(c.client_id)})</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Название проекта</label><input class="input" id="p_name"></div>
+        <div><label class="muted small">Тип</label><select class="input" id="p_type">${optList(getProjectTypes(),"")}</select></div>
+        <div><label class="muted small">Проверяющий</label><select class="input" id="p_reviewer">${optList(getReviewers(),"")}</select></div>
+        <div><label class="muted small">Статус</label><select class="input" id="p_status">${optList(["green","yellow","red"],"green")}</select></div>
+        <div><label class="muted small">Юнитов/нед</label><input class="input" id="p_units"></div>
+        <div><label class="muted small">KPI goal</label><input class="input" id="p_kpi"></div>
+        <div><label class="muted small">Start date</label><input class="input" id="p_start" type="date" value="${shortDate(new Date())}"></div>
+        <div><label class="muted small">Target date</label><input class="input" id="p_target" type="date"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="p_notes"></textarea></div>
+      </div>
+      ${modalActionsRow({onSaveJs:"Forms.saveProjectNew()"})}
+    `);
+  },
+  openEditProject(projectId){
+    const p = sheetToObjects("Projects").find(x=>x.project_id===projectId);
+    if(!p) return UI.toast("Проект не найден");
+    const clients = sheetToObjects("Clients");
+    UI.openModal("Изменить проект", `
+      <div class="form">
+        <div>
+          <label class="muted small">Клиент</label>
+          <select class="input" id="p_client">
+            ${clients.map(c=>`<option value="${escapeAttr(c.client_id)}" ${String(c.client_id)===String(p.client_id)?"selected":""}>${escapeHtml(c.client_name)} (${escapeHtml(c.client_id)})</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Название проекта</label><input class="input" id="p_name" value="${escapeAttr(p.project_name||"")}"></div>
+        <div><label class="muted small">Тип</label><select class="input" id="p_type">${optList(getProjectTypes(), p.type||"")}</select></div>
+        <div><label class="muted small">Проверяющий</label><select class="input" id="p_reviewer">${optList(getReviewers(), p.reviewer||"")}</select></div>
+        <div><label class="muted small">Статус</label><select class="input" id="p_status">${optList(["green","yellow","red"], p.status||"green")}</select></div>
+        <div><label class="muted small">Юнитов/нед</label><input class="input" id="p_units" value="${escapeAttr(p.weekly_units||"")}"></div>
+        <div><label class="muted small">KPI goal</label><input class="input" id="p_kpi" value="${escapeAttr(p.kpi_goal||"")}"></div>
+        <div><label class="muted small">Start date</label><input class="input" id="p_start" type="date" value="${escapeAttr(shortDate(p.start_date))}"></div>
+        <div><label class="muted small">Target date</label><input class="input" id="p_target" type="date" value="${escapeAttr(shortDate(p.target_date))}"></div>
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="p_notes">${escapeHtml(p.notes||"")}</textarea></div>
+      </div>
+      <div class="hint">ID: ${escapeHtml(p.project_id)}</div>
+      ${modalActionsRow({onSaveJs:`Forms.saveProjectEdit('${escapeAttr(p.project_id)}')`})}
+    `);
+  },
+  saveProjectNew(){
+    const row = {
+      project_id: genId("P"),
+      client_id: document.getElementById("p_client").value.trim(),
+      project_name: document.getElementById("p_name").value.trim(),
+      type: document.getElementById("p_type").value.trim(),
+      reviewer: document.getElementById("p_reviewer").value.trim(),
+      status: document.getElementById("p_status").value.trim(),
+      weekly_units: document.getElementById("p_units").value.trim(),
+      kpi_goal: document.getElementById("p_kpi").value.trim(),
+      start_date: document.getElementById("p_start").value,
+      target_date: document.getElementById("p_target").value,
+      notes: document.getElementById("p_notes").value.trim()
+    };
+    if(!row.project_name) return UI.toast("Заполни название проекта");
+    queueOp({sheet:"Projects", action:"upsert", row});
+    upsertLocal("Projects", row);
+    UI.closeModal(); render();
+  },
+  saveProjectEdit(projectId){
+    const p = sheetToObjects("Projects").find(x=>x.project_id===projectId);
+    if(!p) return UI.toast("Проект не найден");
+    const row = {
+      ...p,
+      project_id: projectId,
+      client_id: document.getElementById("p_client").value.trim(),
+      project_name: document.getElementById("p_name").value.trim(),
+      type: document.getElementById("p_type").value.trim(),
+      reviewer: document.getElementById("p_reviewer").value.trim(),
+      status: document.getElementById("p_status").value.trim(),
+      weekly_units: document.getElementById("p_units").value.trim(),
+      kpi_goal: document.getElementById("p_kpi").value.trim(),
+      start_date: document.getElementById("p_start").value,
+      target_date: document.getElementById("p_target").value,
+      notes: document.getElementById("p_notes").value.trim()
+    };
+    if(!row.project_name) return UI.toast("Заполни название проекта");
+    queueOp({sheet:"Projects", action:"upsert", row});
+    upsertLocal("Projects", row);
+    UI.closeModal(); render();
+  },
+
+  /* ===== TASKS ===== */
+  openAddTask(){
+    const projects = sheetToObjects("Projects");
+    if(!projects.length) return UI.toast("Сначала добавь проект");
+    UI.openModal("Добавить задачу", `
+      <div class="form">
+        <div>
+          <label class="muted small">Проект</label>
+          <select class="input" id="t_project">
+            ${projects.map(p=>`<option value="${escapeAttr(p.project_id)}">${escapeHtml(p.project_name)} (${escapeHtml(p.project_id)})</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Название</label><input class="input" id="t_title"></div>
+
+        <div><label class="muted small">Исполнитель</label><select class="input" id="t_assignee">${optList(getTeamPeople(),"")}</select></div>
+        <div><label class="muted small">Юниты</label><input class="input" id="t_units"></div>
+
+        <div><label class="muted small">Приоритет</label><select class="input" id="t_priority">${optList(["low","normal","high"],"normal")}</select></div>
+        <div><label class="muted small">Статус</label><select class="input" id="t_status">${optList(["To do","Doing","Review","Done"],"To do")}</select></div>
+
+        <div><label class="muted small">Дедлайн</label><input class="input" id="t_due" type="date"></div>
+        <div><label class="muted small">Вложение (link)</label><input class="input" id="t_attach"></div>
+
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="t_notes"></textarea></div>
+      </div>
+      ${modalActionsRow({onSaveJs:"Forms.saveTaskNew()"})}
+    `);
+  },
+  openEditTask(taskId){
+    const t = sheetToObjects("Tasks").find(x=>x.task_id===taskId);
+    if(!t) return UI.toast("Задача не найдена");
+    const projects = sheetToObjects("Projects");
+    UI.openModal("Изменить задачу", `
+      <div class="form">
+        <div>
+          <label class="muted small">Проект</label>
+          <select class="input" id="t_project">
+            ${projects.map(p=>`<option value="${escapeAttr(p.project_id)}" ${String(p.project_id)===String(t.project_id)?"selected":""}>${escapeHtml(p.project_name)} (${escapeHtml(p.project_id)})</option>`).join("")}
+          </select>
+        </div>
+        <div><label class="muted small">Название</label><input class="input" id="t_title" value="${escapeAttr(t.title||"")}"></div>
+
+        <div><label class="muted small">Исполнитель</label><select class="input" id="t_assignee">${optList(getTeamPeople(), t.assignee||"")}</select></div>
+        <div><label class="muted small">Юниты</label><input class="input" id="t_units" value="${escapeAttr(t.units||"")}"></div>
+
+        <div><label class="muted small">Приоритет</label><select class="input" id="t_priority">${optList(["low","normal","high"], t.priority||"normal")}</select></div>
+        <div><label class="muted small">Статус</label><select class="input" id="t_status">${optList(["To do","Doing","Review","Done"], t.status||"To do")}</select></div>
+
+        <div><label class="muted small">Дедлайн</label><input class="input" id="t_due" type="date" value="${escapeAttr(shortDate(t.due_date))}"></div>
+        <div><label class="muted small">Вложение (link)</label><input class="input" id="t_attach" value="${escapeAttr(t.attachments||"")}"></div>
+
+        <div style="grid-column:1/-1"><label class="muted small">Заметки</label><textarea class="input" id="t_notes">${escapeHtml(t.notes||"")}</textarea></div>
+      </div>
+      <div class="hint">ID: ${escapeHtml(t.task_id)}</div>
+      ${modalActionsRow({onSaveJs:`Forms.saveTaskEdit('${escapeAttr(t.task_id)}')`})}
+    `);
+  },
+  saveTaskNew(){
+    const status = document.getElementById("t_status").value.trim();
+    const row = {
+      task_id: genId("T"),
+      project_id: document.getElementById("t_project").value.trim(),
+      title: document.getElementById("t_title").value.trim(),
+      assignee: document.getElementById("t_assignee").value.trim(),
+      units: document.getElementById("t_units").value.trim(),
+      priority: document.getElementById("t_priority").value.trim(),
+      status: status,
+      due_date: document.getElementById("t_due").value,
+      created_at: new Date().toISOString(),
+      completed_at: status==="Done" ? new Date().toISOString() : "",
+      notes: document.getElementById("t_notes").value.trim(),
+      attachments: document.getElementById("t_attach").value.trim()
+    };
+    if(!row.title) return UI.toast("Заполни название задачи");
+    queueOp({sheet:"Tasks", action:"upsert", row});
+    upsertLocal("Tasks", row);
+    UI.closeModal(); render();
+  },
+  saveTaskEdit(taskId){
+    const t = sheetToObjects("Tasks").find(x=>x.task_id===taskId);
+    if(!t) return UI.toast("Задача не найдена");
+    const status = document.getElementById("t_status").value.trim();
+    const row = {
+      ...t,
+      task_id: taskId,
+      project_id: document.getElementById("t_project").value.trim(),
+      title: document.getElementById("t_title").value.trim(),
+      assignee: document.getElementById("t_assignee").value.trim(),
+      units: document.getElementById("t_units").value.trim(),
+      priority: document.getElementById("t_priority").value.trim(),
+      status: status,
+      due_date: document.getElementById("t_due").value,
+      completed_at: status==="Done" ? (t.completed_at || new Date().toISOString()) : "",
+      notes: document.getElementById("t_notes").value.trim(),
+      attachments: document.getElementById("t_attach").value.trim()
+    };
+    if(!row.title) return UI.toast("Заполни название задачи");
+    queueOp({sheet:"Tasks", action:"upsert", row});
+    upsertLocal("Tasks", row);
+    UI.closeModal(); render();
+  },
+
+  /* ===== TRANSACTIONS (FINANCE) ===== */
+  openAddTx(){
+    const projects = sheetToObjects("Projects");
+    if(!projects.length) return UI.toast("Сначала добавь проект");
+    UI.openModal("Добавить операцию", txFormHtml({mode:"new"}));
+    setTimeout(()=>Forms.onCurrencyChange(),0);
+  },
+  openEditTx(txId){
+    const tx = sheetToObjects("Transactions").find(x=>x.transaction_id===txId);
+    if(!tx) return UI.toast("Операция не найдена");
+    UI.openModal("Изменить операцию", txFormHtml({mode:"edit", tx}));
+    setTimeout(()=>Forms.onCurrencyChange(true),0);
+  },
+  onCurrencyChange(skipAuto){
+    const curEl = document.getElementById("f_cur");
+    const rateEl = document.getElementById("f_rate");
+    if(!curEl || !rateEl) return;
+    if(!skipAuto && curEl.value === "EUR") rateEl.value = "1";
+  },
+  saveTxNew(){
+    const amount = (document.getElementById("f_amount").value || "").trim().replace(",", ".");
+    const rate = (document.getElementById("f_rate").value || "").trim().replace(",", ".");
+    const row = {
+      transaction_id: genId("F"),
+      project_id: document.getElementById("f_project").value,
+      type: document.getElementById("f_type").value,
+      amount: amount,
+      currency: document.getElementById("f_cur").value,
+      date: document.getElementById("f_date").value,
+      description: (document.getElementById("f_desc").value || "").trim(),
+      attachment: "",
+      client_name: (document.getElementById("f_client_name").value || "").trim(),
+      paid_by: document.getElementById("f_paid_by").value,
+      paid_to: (document.getElementById("f_paid_to").value || "").trim(),
+      fx_rate_to_eur: rate
+    };
+    if(!row.amount) return UI.toast("Заполни сумму");
+    if(!row.fx_rate_to_eur) return UI.toast("Заполни курс");
+    queueOp({ sheet:"Transactions", action:"upsert", row });
+    upsertLocal("Transactions", row);
+    UI.closeModal(); render();
+  },
+  saveTxEdit(txId){
+    const tx = sheetToObjects("Transactions").find(x=>x.transaction_id===txId);
+    if(!tx) return UI.toast("Операция не найдена");
+    const amount = (document.getElementById("f_amount").value || "").trim().replace(",", ".");
+    const rate = (document.getElementById("f_rate").value || "").trim().replace(",", ".");
+    const row = {
+      ...tx,
+      transaction_id: txId,
+      project_id: document.getElementById("f_project").value,
+      type: document.getElementById("f_type").value,
+      amount: amount,
+      currency: document.getElementById("f_cur").value,
+      date: document.getElementById("f_date").value,
+      description: (document.getElementById("f_desc").value || "").trim(),
+      client_name: (document.getElementById("f_client_name").value || "").trim(),
+      paid_by: document.getElementById("f_paid_by").value,
+      paid_to: (document.getElementById("f_paid_to").value || "").trim(),
+      fx_rate_to_eur: rate
+    };
+    if(!row.amount) return UI.toast("Заполни сумму");
+    if(!row.fx_rate_to_eur) return UI.toast("Заполни курс");
+    queueOp({ sheet:"Transactions", action:"upsert", row });
+    upsertLocal("Transactions", row);
+    UI.closeModal(); render();
+  },
+};
+
+function txFormHtml({mode, tx}){
+  const projects = sheetToObjects("Projects");
+  const isEdit = mode==="edit";
+  const v = (k)=> isEdit ? (tx?.[k] ?? "") : "";
+  const dateDefault = isEdit ? shortDate(v("date")) : shortDate(new Date());
+  return `
+    <div class="form">
+      <div>
+        <label class="muted small">Тип</label>
+        <select class="input" id="f_type">
+          ${optList(["income","expense","founder_loan","founder_repay","payout_founders","payout_staff"], v("type")||"income")}
+        </select>
+      </div>
+
+      <div>
+        <label class="muted small">Проект</label>
+        <select class="input" id="f_project">
+          ${projects.map(p=>`<option value="${escapeAttr(p.project_id)}" ${String(p.project_id)===String(v("project_id"))?"selected":""}>${escapeHtml(p.project_name)} (${escapeHtml(p.project_id)})</option>`).join("")}
+        </select>
+      </div>
+
+      <div><label class="muted small">Сумма</label><input class="input" id="f_amount" value="${escapeAttr(v("amount"))}"></div>
+
+      <div>
+        <label class="muted small">Валюта</label>
+        <select class="input" id="f_cur" onchange="Forms.onCurrencyChange()">
+          ${optList(["EUR","USD","UAH"], v("currency")||"EUR")}
+        </select>
+      </div>
+
+      <div><label class="muted small">Курс к EUR</label><input class="input" id="f_rate" value="${escapeAttr(v("fx_rate_to_eur"))}"></div>
+      <div><label class="muted small">Дата</label><input class="input" id="f_date" type="date" value="${escapeAttr(dateDefault)}"></div>
+
+      <div>
+        <label class="muted small">Кто оплатил</label>
+        <select class="input" id="f_paid_by">
+          ${optList(["client","Luter","Vitor","PM","Team"], v("paid_by")||"client")}
+        </select>
+      </div>
+
+      <div>
+        <label class="muted small">Кому ушло</label>
+        <input class="input" id="f_paid_to" list="paidToList" value="${escapeAttr(v("paid_to"))}">
+        <datalist id="paidToList">
+          <option value="Wortex"></option>
+          <option value="Luter"></option>
+          <option value="Vitor"></option>
+          <option value="Rex"></option>
+          <option value="Contractor"></option>
+          <option value="Service"></option>
+          <option value="Ads"></option>
+          <option value="Tools"></option>
+          <option value="Other"></option>
+        </datalist>
+      </div>
+
+      <div style="grid-column:1/-1"><label class="muted small">Клиент (имя)</label><input class="input" id="f_client_name" value="${escapeAttr(v("client_name"))}"></div>
+      <div style="grid-column:1/-1"><label class="muted small">Описание</label><input class="input" id="f_desc" value="${escapeAttr(v("description"))}"></div>
+    </div>
+
+    ${isEdit
+      ? modalActionsRow({onSaveJs:`Forms.saveTxEdit('${escapeAttr(v("transaction_id"))}')`})
+      : modalActionsRow({onSaveJs:"Forms.saveTxNew()"})
+    }
+  `;
+}
+
+/* =======================
+   ACTIONS (delete/edit buttons)
+======================= */
+const Actions = {
+  saveSettings(){
+    State.settings.apiUrl = document.getElementById("apiUrl").value.trim();
+    State.settings.role = document.getElementById("uiRole").value.trim();
+    State.settings.token = document.getElementById("uiToken").value.trim();
+    State.settings.actor = document.getElementById("uiActor").value.trim();
+    saveSettings();
+    UI.toast("Сохранено");
+    render();
+  },
+  async testConnection(){
+    try{ await apiGetAll(); UI.toast("ОК: API отвечает"); }
+    catch(e){ UI.toast("Ошибка: " + (e.message||e)); }
+  },
+
+  deleteRow(sheet, idVal){
+    if(!confirm("Удалить запись?")) return;
+    const key = idField(sheet);
+    queueOp({ sheet, action:"delete", row: { [key]: idVal } });
+    deleteLocal(sheet, idVal);
+    render();
+  },
+
+  // Delegates
+  openAddClient: Forms.openAddClient,
+  openEditClient: Forms.openEditClient,
+  openAddProject: Forms.openAddProject,
+  openEditProject: Forms.openEditProject,
+  openAddTask: Forms.openAddTask,
+  openEditTask: Forms.openEditTask,
+  openAddTx: Forms.openAddTx,
+  openEditTx: Forms.openEditTx,
+
+  taskMove(taskId, status){
+    const t = sheetToObjects("Tasks").find(x=>x.task_id===taskId);
+    if(!t) return UI.toast("Задача не найдена");
+    const row = {...t, status: status};
+    if(status==="Done") row.completed_at = t.completed_at || new Date().toISOString();
+    if(status!=="Done") row.completed_at = "";
+    queueOp({sheet:"Tasks", action:"upsert", row});
+    upsertLocal("Tasks", row);
+    render();
+  },
+};
 
 /* =======================
    PAGES
@@ -645,7 +1177,6 @@ function renderDashboard(){
   `;
 }
 
-/* ==== CLIENTS ==== */
 function renderClients(){
   const clients = sheetToObjects("Clients");
   const projects = sheetToObjects("Projects");
@@ -658,9 +1189,11 @@ function renderClients(){
         <td>${escapeHtml(c.platform||"")}</td>
         <td>${escapeHtml(c.status||"")}</td>
         <td>${count}</td>
-        <td class="right">
-          <button class="btn mini" onclick="Actions.openEditClient('${c.client_id}')">Изм.</button>
-          <button class="btn mini danger" onclick="Actions.deleteRow('Clients','${c.client_id}')">Удалить</button>
+        <td class="actions-cell">
+          <span class="actions">
+            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditClient('${escapeAttr(c.client_id)}')">${iconPencil()}</button>
+            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Clients','${escapeAttr(c.client_id)}')">${iconTrash()}</button>
+          </span>
         </td>
       </tr>
     `;
@@ -681,8 +1214,8 @@ function renderClients(){
           <div class="m-row"><span class="k">ID</span><span>${escapeHtml(c.client_id||"")}</span></div>
           <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(c.notes||"")}</span></div>
           <div class="m-actions">
-            <button class="btn mini" onclick="Actions.openEditClient('${c.client_id}')">Изменить</button>
-            <button class="btn mini danger" onclick="Actions.deleteRow('Clients','${c.client_id}')">Удалить</button>
+            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditClient('${escapeAttr(c.client_id)}')">${iconPencil()}</button>
+            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Clients','${escapeAttr(c.client_id)}')">${iconTrash()}</button>
           </div>
         </div>
       </details>
@@ -715,7 +1248,6 @@ function renderClients(){
   `;
 }
 
-/* ==== PROJECTS ==== */
 function renderProjects(){
   const projects = sheetToObjects("Projects");
   const clients = sheetToObjects("Clients");
@@ -724,19 +1256,22 @@ function renderProjects(){
   const desktopRows = projects.map(p=>{
     const client = clients.find(c=>c.client_id===p.client_id);
     const open = tasks.filter(t=>t.project_id===p.project_id && t.status!=="Done").length;
-    const st = String(p.status||"").toLowerCase();
-    const cls = st==="green"?"s-ok":(st==="yellow"?"s-warn":(st==="red"?"s-bad":""));
+    const dot = statusDotClass(p.status);
     return `
       <tr>
         <td><b>${escapeHtml(p.project_name||"")}</b><div class="muted small">${escapeHtml(p.project_id||"")} • ${escapeHtml(p.type||"")}</div></td>
         <td>${escapeHtml(client?.client_name||"")}</td>
-        <td class="status ${cls}">${escapeHtml(p.status||"")}</td>
+        <td>
+          <span class="status-wrap"><span class="dot ${dot}"></span><span class="status-text">${escapeHtml(p.status||"")}</span></span>
+        </td>
         <td>${escapeHtml(p.reviewer||"")}</td>
         <td>${escapeHtml(p.weekly_units||"")}</td>
         <td>${open}</td>
-        <td class="right">
-          <button class="btn mini" onclick="Actions.openEditProject('${p.project_id}')">Изм.</button>
-          <button class="btn mini danger" onclick="Actions.deleteRow('Projects','${p.project_id}')">Удалить</button>
+        <td class="actions-cell">
+          <span class="actions">
+            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditProject('${escapeAttr(p.project_id)}')">${iconPencil()}</button>
+            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Projects','${escapeAttr(p.project_id)}')">${iconTrash()}</button>
+          </span>
         </td>
       </tr>
     `;
@@ -745,6 +1280,7 @@ function renderProjects(){
   const mobileCards = projects.map(p=>{
     const client = clients.find(c=>c.client_id===p.client_id);
     const open = tasks.filter(t=>t.project_id===p.project_id && t.status!=="Done").length;
+    const dot = statusDotClass(p.status);
     return `
       <details class="m-card">
         <summary>
@@ -756,14 +1292,14 @@ function renderProjects(){
         </summary>
         <div class="m-body">
           <div class="m-row"><span class="k">ID</span><span>${escapeHtml(p.project_id||"")}</span></div>
-          <div class="m-row"><span class="k">Статус</span><span>${escapeHtml(p.status||"")}</span></div>
+          <div class="m-row"><span class="k">Статус</span><span><span class="dot ${dot}" style="margin-right:0"></span></span></div>
           <div class="m-row"><span class="k">Проверяющий</span><span>${escapeHtml(p.reviewer||"")}</span></div>
           <div class="m-row"><span class="k">Юниты/нед</span><span>${escapeHtml(p.weekly_units||"")}</span></div>
           <div class="m-row"><span class="k">KPI</span><span>${escapeHtml(p.kpi_goal||"")}</span></div>
           <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(p.notes||"")}</span></div>
           <div class="m-actions">
-            <button class="btn mini" onclick="Actions.openEditProject('${p.project_id}')">Изменить</button>
-            <button class="btn mini danger" onclick="Actions.deleteRow('Projects','${p.project_id}')">Удалить</button>
+            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditProject('${escapeAttr(p.project_id)}')">${iconPencil()}</button>
+            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Projects','${escapeAttr(p.project_id)}')">${iconTrash()}</button>
           </div>
         </div>
       </details>
@@ -796,63 +1332,60 @@ function renderProjects(){
   `;
 }
 
-/* ==== TASKS ==== */
 function renderTasks(){
   const tasks = sheetToObjects("Tasks");
   const projects = sheetToObjects("Projects");
 
-  const desktopRows = tasks
-    .sort((a,b)=> String(a.due_date||"").localeCompare(String(b.due_date||"")))
-    .map(t=>{
-      const p = projects.find(x=>x.project_id===t.project_id);
-      const dcls = deadlineClass(t.due_date);
-      const dHtml = `<span class="deadline ${dcls}">${escapeHtml(shortDate(t.due_date))}</span>`;
-      return `
-        <tr>
-          <td><b>${escapeHtml(t.title||"")}</b><div class="muted small">${escapeHtml(t.task_id||"")} • ${escapeHtml(p?.project_name||"")}</div></td>
-          <td>${escapeHtml(t.assignee||"")}</td>
-          <td>${escapeHtml(t.status||"")}</td>
-          <td>${dHtml}</td>
-          <td>${escapeHtml(t.units||"")}</td>
-          <td class="right">
-            <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','To do')">To do</button>
-            <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Doing')">Doing</button>
-            <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Review')">Review</button>
-            <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Done')">Done</button>
-            <button class="btn mini danger" onclick="Actions.deleteRow('Tasks','${t.task_id}')">Удалить</button>
-          </td>
-        </tr>
-      `;
-    }).join("");
+  const sorted = [...tasks].sort((a,b)=> String(a.due_date||"").localeCompare(String(b.due_date||"")));
 
-  const mobileCards = tasks
-    .sort((a,b)=> String(a.due_date||"").localeCompare(String(b.due_date||"")))
-    .map(t=>{
-      const p = projects.find(x=>x.project_id===t.project_id);
-      return `
-        <details class="m-card">
-          <summary>
-            <div class="m-main">
-              <div class="m-title">${escapeHtml(t.title||"")}</div>
-              <div class="m-sub">${escapeHtml(t.assignee||"")} • ${escapeHtml(p?.project_name||"")} • ${escapeHtml(t.status||"")}</div>
-            </div>
-            <div class="chev">▾</div>
-          </summary>
-          <div class="m-body">
-            <div class="m-row"><span class="k">Дедлайн</span><span>${escapeHtml(shortDate(t.due_date))}</span></div>
-            <div class="m-row"><span class="k">Юниты</span><span>${escapeHtml(t.units||"")}</span></div>
-            <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(t.notes||"")}</span></div>
-            <div class="m-actions">
-              <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','To do')">To do</button>
-              <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Doing')">Doing</button>
-              <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Review')">Review</button>
-              <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Done')">Done</button>
-              <button class="btn mini danger" onclick="Actions.deleteRow('Tasks','${t.task_id}')">Удалить</button>
-            </div>
+  const desktopRows = sorted.map(t=>{
+    const p = projects.find(x=>x.project_id===t.project_id);
+    const dcls = deadlineClass(t.due_date);
+    const dHtml = `<span class="deadline ${dcls}">${escapeHtml(shortDate(t.due_date))}</span>`;
+    return `
+      <tr>
+        <td><b>${escapeHtml(t.title||"")}</b><div class="muted small">${escapeHtml(t.task_id||"")} • ${escapeHtml(p?.project_name||"")}</div></td>
+        <td>${escapeHtml(t.assignee||"")}</td>
+        <td>${escapeHtml(t.status||"")}</td>
+        <td>${dHtml}</td>
+        <td>${escapeHtml(t.units||"")}</td>
+        <td class="actions-cell">
+          <span class="actions">
+            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTask('${escapeAttr(t.task_id)}')">${iconPencil()}</button>
+            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Tasks','${escapeAttr(t.task_id)}')">${iconTrash()}</button>
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  const mobileCards = sorted.map(t=>{
+    const p = projects.find(x=>x.project_id===t.project_id);
+    return `
+      <details class="m-card">
+        <summary>
+          <div class="m-main">
+            <div class="m-title">${escapeHtml(t.title||"")}</div>
+            <div class="m-sub">${escapeHtml(t.assignee||"")} • ${escapeHtml(p?.project_name||"")} • ${escapeHtml(t.status||"")}</div>
           </div>
-        </details>
-      `;
-    }).join("");
+          <div class="chev">▾</div>
+        </summary>
+        <div class="m-body">
+          <div class="m-row"><span class="k">Дедлайн</span><span>${escapeHtml(shortDate(t.due_date))}</span></div>
+          <div class="m-row"><span class="k">Юниты</span><span>${escapeHtml(t.units||"")}</span></div>
+          <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(t.notes||"")}</span></div>
+          <div class="m-actions">
+            <button class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','To do')">To do</button>
+            <button class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Doing')">Doing</button>
+            <button class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Review')">Review</button>
+            <button class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Done')">Done</button>
+            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTask('${escapeAttr(t.task_id)}')">${iconPencil()}</button>
+            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Tasks','${escapeAttr(t.task_id)}')">${iconTrash()}</button>
+          </div>
+        </div>
+      </details>
+    `;
+  }).join("");
 
   return `
     <div class="card">
@@ -871,6 +1404,7 @@ function renderTasks(){
             <tbody>${desktopRows || `<tr><td colspan="6" class="muted">Пока пусто</td></tr>`}</tbody>
           </table>
         </div>
+        <div class="hint">Смена статуса: открой ✏️ и выбери статус, либо используй кнопки на телефоне.</div>
       </div>
 
       <div class="mobile-only">
@@ -880,14 +1414,12 @@ function renderTasks(){
   `;
 }
 
-/* ==== FINANCE ==== */
 function renderFinance(){
   const role = (State.settings.role || "Team").trim();
   const txAll = sheetToObjects("Transactions").filter(x => String(x.transaction_id||"").trim() !== "");
   const projects = sheetToObjects("Projects");
   const projMap = Object.fromEntries(projects.map(p=>[p.project_id, p]));
 
-  // Summary (EUR)
   const cash = sum(txAll.map(x=>Number(x.cash_delta_eur)||0));
   const bank = sum(txAll.map(x=>Number(x.bank_10)||0));
   const payrollPool = sum(txAll.map(x=>Number(x.payroll_50)||0));
@@ -916,8 +1448,11 @@ function renderFinance(){
           <td>${escapeHtml(x.client_name||"")}</td>
           <td>${escapeHtml(x.paid_by||"")} → ${escapeHtml(x.paid_to||"")}</td>
           <td>${escapeHtml(x.description||"")}</td>
-          <td class="right">
-            <button class="btn mini danger" onclick="Actions.deleteRow('Transactions','${x.transaction_id}')">Удалить</button>
+          <td class="actions-cell">
+            <span class="actions">
+              <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTx('${escapeAttr(x.transaction_id)}')">${iconPencil()}</button>
+              <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Transactions','${escapeAttr(x.transaction_id)}')">${iconTrash()}</button>
+            </span>
           </td>
         </tr>
       `;
@@ -945,7 +1480,8 @@ function renderFinance(){
             <div class="m-row"><span class="k">Кто→Кому</span><span>${escapeHtml(x.paid_by||"")} → ${escapeHtml(x.paid_to||"")}</span></div>
             <div class="m-row"><span class="k">Описание</span><span>${escapeHtml(x.description||"")}</span></div>
             <div class="m-actions">
-              <button class="btn mini danger" onclick="Actions.deleteRow('Transactions','${x.transaction_id}')">Удалить</button>
+              <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTx('${escapeAttr(x.transaction_id)}')">${iconPencil()}</button>
+              <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Transactions','${escapeAttr(x.transaction_id)}')">${iconTrash()}</button>
             </div>
           </div>
         </details>
@@ -1018,6 +1554,11 @@ function renderTeam(){
       <td>${escapeHtml(p.role||"")}</td>
       <td>${escapeHtml(p.weekly_capacity_units||"")}</td>
       <td>${escapeHtml(p.notes||"")}</td>
+      <td class="actions-cell">
+        <span class="actions">
+          <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Team','${escapeAttr(p.person)}')">${iconTrash()}</button>
+        </span>
+      </td>
     </tr>
   `).join("");
 
@@ -1032,6 +1573,9 @@ function renderTeam(){
       </summary>
       <div class="m-body">
         <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(p.notes||"")}</span></div>
+        <div class="m-actions">
+          <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Team','${escapeAttr(p.person)}')">${iconTrash()}</button>
+        </div>
       </div>
     </details>
   `).join("");
@@ -1044,10 +1588,11 @@ function renderTeam(){
       <div class="desktop-only">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Человек</th><th>Роль</th><th>Capacity</th><th>Заметки</th></tr></thead>
-            <tbody>${desktopRows || `<tr><td colspan="4" class="muted">Пока пусто</td></tr>`}</tbody>
+            <thead><tr><th>Человек</th><th>Роль</th><th>Capacity</th><th>Заметки</th><th></th></tr></thead>
+            <tbody>${desktopRows || `<tr><td colspan="5" class="muted">Пока пусто</td></tr>`}</tbody>
           </table>
         </div>
+        <div class="hint">Добавление/редактирование команды делай в Google Sheets. Удаление — здесь.</div>
       </div>
 
       <div class="mobile-only">
@@ -1090,6 +1635,23 @@ function renderRoutines(){
   }
   return `<div class="grid">${box(Daily,"Daily")}${box(["Статусы проектов","Загрузка команды","Метрики/отчёты","1 решение недели"],"Weekly")}</div>`;
 }
+
+Actions.toggleRoutine = function(group, id, checked){
+  const key="wortex_os_routines_v1";
+  let r={daily:{},weekly:{},monthly:{}};
+  try{ const raw=localStorage.getItem(key); if(raw) r=JSON.parse(raw);}catch(e){}
+  r[group]=r[group]||{};
+  r[group][id]=checked;
+  localStorage.setItem(key, JSON.stringify(r));
+};
+Actions.resetRoutine = function(group){
+  const key="wortex_os_routines_v1";
+  let r={daily:{},weekly:{},monthly:{}};
+  try{ const raw=localStorage.getItem(key); if(raw) r=JSON.parse(raw);}catch(e){}
+  r[group]={};
+  localStorage.setItem(key, JSON.stringify(r));
+  render();
+};
 
 function renderSettings(){
   const apiUrl = State.settings.apiUrl || "";
@@ -1135,175 +1697,6 @@ function renderSettings(){
 }
 
 /* =======================
-   ACTIONS
-======================= */
-const Actions = {
-  saveSettings(){
-    State.settings.apiUrl = document.getElementById("apiUrl").value.trim();
-    State.settings.role = document.getElementById("uiRole").value.trim();
-    State.settings.token = document.getElementById("uiToken").value.trim();
-    State.settings.actor = document.getElementById("uiActor").value.trim();
-    saveSettings();
-    UI.toast("Сохранено");
-    render();
-  },
-  async testConnection(){
-    try{ await apiGetAll(); UI.toast("ОК: API отвечает"); }
-    catch(e){ UI.toast("Ошибка: " + (e.message||e)); }
-  },
-  toggleRoutine(group, id, checked){
-    const key="wortex_os_routines_v1";
-    let r={daily:{},weekly:{},monthly:{}};
-    try{ const raw=localStorage.getItem(key); if(raw) r=JSON.parse(raw);}catch(e){}
-    r[group]=r[group]||{};
-    r[group][id]=checked;
-    localStorage.setItem(key, JSON.stringify(r));
-  },
-  resetRoutine(group){
-    const key="wortex_os_routines_v1";
-    let r={daily:{},weekly:{},monthly:{}};
-    try{ const raw=localStorage.getItem(key); if(raw) r=JSON.parse(raw);}catch(e){}
-    r[group]={};
-    localStorage.setItem(key, JSON.stringify(r));
-    render();
-  },
-
-  deleteRow(sheet, id){
-    if(!confirm("Удалить запись?")) return;
-    queueOp({ sheet, action:"delete", row: { [State.data[sheet][0][0]]: id } });
-    deleteLocal(sheet, id);
-    render();
-  },
-
-  /* TODO: тут оставлены заглушки как раньше — если хочешь, вернём модалки клиентов/проектов/задач */
-  openAddClient(){ UI.toast("Добавление клиента: можно вернуть модалку (скажи)."); },
-  openEditClient(){ UI.toast("Редактирование клиента: можно вернуть модалку (скажи)."); },
-  openAddProject(){ UI.toast("Добавление проекта: можно вернуть модалку (скажи)."); },
-  openEditProject(){ UI.toast("Редактирование проекта: можно вернуть модалку (скажи)."); },
-  openAddTask(){ UI.toast("Добавление задачи: можно вернуть модалку (скажи)."); },
-
-  taskMove(taskId, status){
-    const t = sheetToObjects("Tasks").find(x=>x.task_id===taskId);
-    if(!t) return;
-    t.status = status;
-    if(status==="Done") t.completed_at = new Date().toISOString();
-    queueOp({ sheet:"Tasks", action:"upsert", row: t });
-    upsertLocal("Tasks", t);
-    render();
-  },
-
-  openAddTx(){
-    const projects = sheetToObjects("Projects");
-    UI.openModal(`
-      <h3>Добавить операцию</h3>
-      <div class="form">
-        <div>
-          <label class="muted small">Тип</label>
-          <select class="input" id="f_type">
-            <option value="income">income</option>
-            <option value="expense">expense</option>
-            <option value="founder_loan">founder_loan</option>
-            <option value="founder_repay">founder_repay</option>
-            <option value="payout_founders">payout_founders</option>
-            <option value="payout_staff">payout_staff</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="muted small">Проект</label>
-          <select class="input" id="f_project">
-            ${projects.map(p=>`<option value="${escapeAttr(p.project_id)}">${escapeHtml(p.project_name)} (${escapeHtml(p.project_id)})</option>`).join("")}
-          </select>
-        </div>
-
-        <div><label class="muted small">Сумма</label><input class="input" id="f_amount"></div>
-
-        <div>
-          <label class="muted small">Валюта</label>
-          <select class="input" id="f_cur" onchange="Actions.onCurrencyChange()">
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-            <option value="UAH">UAH</option>
-          </select>
-        </div>
-
-        <div><label class="muted small">Курс к EUR</label><input class="input" id="f_rate"></div>
-        <div><label class="muted small">Дата</label><input class="input" id="f_date" type="date" value="${shortDate(new Date())}"></div>
-
-        <div>
-          <label class="muted small">Кто оплатил (paid_by)</label>
-          <select class="input" id="f_paid_by">
-            <option value="client">client</option>
-            <option value="Luter">Luter</option>
-            <option value="Vitor">Vitor</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="muted small">Кому ушло (paid_to)</label>
-          <input class="input" id="f_paid_to" list="paidToList">
-          <datalist id="paidToList">
-            <option value="Wortex">
-            <option value="Rex">
-            <option value="Luter">
-            <option value="Vitor">
-            <option value="Contractor">
-            <option value="Service">
-            <option value="Ads">
-            <option value="Tools">
-            <option value="Other">
-          </datalist>
-        </div>
-
-        <div style="grid-column:1/-1"><label class="muted small">Клиент (имя)</label><input class="input" id="f_client_name"></div>
-        <div style="grid-column:1/-1"><label class="muted small">Описание</label><input class="input" id="f_desc"></div>
-      </div>
-
-      <div class="row" style="justify-content:flex-end;margin-top:10px">
-        <button class="btn primary" onclick="Actions.saveTxNew()">Сохранить</button>
-      </div>
-    `);
-
-    setTimeout(()=>Actions.onCurrencyChange(),0);
-  },
-
-  onCurrencyChange(){
-    const curEl = document.getElementById("f_cur");
-    const rateEl = document.getElementById("f_rate");
-    if(!curEl || !rateEl) return;
-    if(curEl.value === "EUR") rateEl.value = "1";
-  },
-
-  saveTxNew(){
-    const amount = (document.getElementById("f_amount").value || "").trim().replace(",", ".");
-    const rate = (document.getElementById("f_rate").value || "").trim().replace(",", ".");
-
-    const row = {
-      transaction_id: genId("F"),
-      project_id: document.getElementById("f_project").value,
-      type: document.getElementById("f_type").value,
-      amount: amount,
-      currency: document.getElementById("f_cur").value,
-      date: document.getElementById("f_date").value,
-      description: (document.getElementById("f_desc").value || "").trim(),
-      attachment: "",
-
-      client_name: (document.getElementById("f_client_name").value || "").trim(),
-      paid_by: document.getElementById("f_paid_by").value,
-      paid_to: (document.getElementById("f_paid_to").value || "").trim(),
-      fx_rate_to_eur: rate
-    };
-
-    if(!row.amount) return UI.toast("Заполни сумму");
-    if(!row.fx_rate_to_eur) return UI.toast("Заполни курс");
-
-    queueOp({ sheet:"Transactions", action:"upsert", row });
-    upsertLocal("Transactions", row);
-    UI.closeModal(); render();
-  },
-};
-
-/* =======================
    WIRE BUTTONS
 ======================= */
 document.getElementById("btnLoadText").onclick =
@@ -1315,8 +1708,16 @@ document.getElementById("btnSyncIcon").onclick = async ()=>{
   try{ await syncQueue(); } catch(e){ UI.toast("Ошибка синка: " + (e.message||e)); }
 };
 
+/* =======================
+   INIT
+======================= */
 loadSettings();
 render();
+
+/* Auto-load if apiUrl exists (soft) */
+if(State.settings.apiUrl){
+  loadAll().catch(()=>{});
+}
 </script>
 </body>
 </html>
