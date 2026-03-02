@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wortex Agency OS</title>
+
   <style>
     :root{
       --bg:#0b0c10; --card:#11131a; --text:#e7e9ee; --muted:#a6adbb; --line:#24283a;
@@ -12,117 +13,312 @@
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);}
-    header{position:sticky;top:0;z-index:5;background:rgba(11,12,16,.92);backdrop-filter: blur(10px);border-bottom:1px solid var(--line);}
-    /* Шире, чем было: больше места под таблицы */
+    a{color:inherit}
+
+    /* ===== HEADER ===== */
+    header{
+      position:sticky; top:0; z-index:50;
+      background:rgba(11,12,16,.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+      transition: all .18s ease;
+    }
     .wrap{max-width:1400px;margin:0 auto;padding:14px 16px;}
     .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-    .brand{display:flex;flex-direction:column;gap:2px}
+    .brand{display:flex;flex-direction:column;gap:2px;min-width:220px}
     .brand b{font-size:16px}
     .brand span{font-size:12px;color:var(--muted)}
-    nav{display:flex;gap:8px;flex-wrap:wrap}
-    .tab{border:1px solid var(--line);background:transparent;color:var(--text);padding:8px 10px;border-radius:999px;cursor:pointer;font-size:13px}
+
+    nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .tab{
+      border:1px solid var(--line);
+      background:transparent;
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:13px;
+      white-space:nowrap;
+    }
     .tab.active{background:var(--chip);border-color:#2f3752}
-    .row{display:flex;gap:12px;flex-wrap:wrap}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--shadow)}
-    .card h3{margin:0 0 8px 0;font-size:14px}
-    .muted{color:var(--muted);font-size:12px}
-    .kpi{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:10px}
-    @media (max-width:980px){.kpi{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:520px){.kpi{grid-template-columns:1fr}}
-    .metric{display:flex;flex-direction:column;gap:6px}
-    .metric b{font-size:20px}
-    .btn{border:1px solid var(--line);background:var(--chip);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer;font-size:13px}
+
+    .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
+
+    .btn{
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:13px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
     .btn.primary{background:var(--accent);border-color:transparent;color:#081018;font-weight:800}
     .btn.ghost{background:transparent}
     .btn.danger{background:rgba(255,77,77,.12);border-color:rgba(255,77,77,.35)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;background:rgba(110,168,254,.12);border:1px solid rgba(110,168,254,.25);font-size:12px;color:var(--text)}
+    .btn.square{
+      width:40px;height:40px;
+      padding:0;
+      justify-content:center;
+      border-radius:12px;
+    }
+    .icon{width:18px;height:18px;display:block}
+
+    /* Compact header mode */
+    header.compact .wrap{padding-top:10px;padding-bottom:10px}
+    header.compact .brand span{display:none}
+    header.compact nav{display:none}            /* вкладки прячем */
+    header.compact .btn:not(.square){display:none} /* прячем текстовые кнопки */
+    header.compact .right{gap:10px}
+    header.compact .burger{display:inline-flex}
+
+    /* Normal header mode */
+    .burger{display:none}
+
+    /* Dropdown menu when burger opened */
+    .menu-pop{
+      display:none;
+      position:fixed;
+      top:64px;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(980px,94vw);
+      background:rgba(17,19,26,.98);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      padding:12px;
+      z-index:60;
+    }
+    .menu-pop .menu-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .menu-pop .menu-title b{font-size:14px}
+    .menu-grid{display:flex;flex-wrap:wrap;gap:8px}
+    header.menu-open ~ .menu-pop{display:block}
+
+    /* ===== LAYOUT / CARDS ===== */
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--shadow)}
+    .card h3{margin:0 0 8px 0;font-size:14px}
+    .muted{color:var(--muted);font-size:12px}
+    .small{font-size:12px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .sep{height:1px;background:var(--line);margin:10px 0}
+
+    .kpi{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:10px}
+    @media (max-width:980px){.kpi{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.kpi{grid-template-columns:1fr}}
+
+    .metric{display:flex;flex-direction:column;gap:6px}
+    .metric b{font-size:20px}
+
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 8px;border-radius:999px;
+      background:rgba(110,168,254,.12);
+      border:1px solid rgba(110,168,254,.25);
+      font-size:12px;color:var(--text)
+    }
+
     .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
     @media (max-width:980px){.grid{grid-template-columns:1fr}}
 
-    /* Формы */
+    /* ===== FORMS ===== */
     .input, select, textarea{
-      width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--line);
-      background:#0f1220; color:var(--text); outline:none;
+      width:100%;
+      padding:9px 10px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:#0f1220;
+      color:var(--text);
+      outline:none;
       font-size:13px;
     }
     textarea{min-height:80px;resize:vertical}
     .form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     @media (max-width:720px){.form{grid-template-columns:1fr}}
-    .sep{height:1px;background:var(--line);margin:10px 0}
+
+    /* ===== TABLES (DESKTOP) ===== */
+    .desktop-only{display:block}
+    .mobile-only{display:none}
+
+    .table-wrap{
+      width:100%;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      border:1px solid var(--line);
+      border-radius:12px
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;    /* важно: чтобы line на tr работала ровно */
+      border-spacing:0;
+      font-size:12.6px;
+      table-layout:fixed;
+    }
+    thead th{
+      color:var(--muted);
+      font-weight:700;
+      text-align:left;
+      position:sticky;
+      top:0;
+      background:rgba(17,19,26,.98);
+      backdrop-filter: blur(6px);
+      z-index:1;
+      padding:10px;
+      border-bottom:1px solid var(--line);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    tbody tr{
+      height:44px;
+      /* линия строки на всю ширину */
+      box-shadow: inset 0 -1px 0 var(--line);
+    }
+    tbody tr:hover td{background:rgba(255,255,255,.02)}
+    tbody td{
+      padding:10px;
+      vertical-align:middle;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .btn.mini{padding:7px 9px;font-size:12px;border-radius:10px}
     .status{font-weight:800}
     .s-ok{color:var(--ok)} .s-warn{color:var(--warn)} .s-bad{color:var(--bad)}
     .deadline.bad{color:var(--bad);font-weight:800}
     .deadline.warn{color:var(--warn);font-weight:800}
-    .small{font-size:12px}
 
-    .right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
-
-    /* === Таблицы: ровные линии/строки на десктопе === */
-    .table-wrap{width:100%;overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px}
-    table{width:100%;border-collapse:collapse;font-size:12.6px;table-layout:fixed;background:transparent}
-    th,td{border-bottom:1px solid var(--line);padding:9px 10px;vertical-align:middle}
-    th{color:var(--muted);font-weight:700;text-align:left;position:sticky;top:0;background:rgba(17,19,26,.98);backdrop-filter: blur(6px);z-index:1}
-    tr{height:44px}
-    tr:hover td{background:rgba(255,255,255,.02)}
-    td, th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-    /* Кнопка удалить компактнее (чтобы не ломала ширину) */
-    .btn.mini{padding:7px 9px;font-size:12px;border-radius:10px}
-
-    /* === Mobile/Tablet: превращаем таблицу в карточки (как CRM) === */
+    /* ===== MOBILE DETAILS CARDS ===== */
     @media (max-width: 860px){
       .wrap{padding:12px}
+      .desktop-only{display:none}
+      .mobile-only{display:block}
+
+      header .wrap{padding:12px}
+      .brand{min-width:auto}
       .tab{padding:10px 12px}
       .btn{padding:10px 12px}
       .btn.mini{padding:10px 12px;font-size:13px}
-      .table-wrap{border:none;border-radius:0;overflow:visible}
-
-      table thead{display:none}
-      table, tbody, tr, td{display:block;width:100%}
-      tr{height:auto;margin:10px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-      td{border-bottom:1px solid var(--line);padding:10px 12px;white-space:normal}
-      td:last-child{border-bottom:none}
-
-      td[data-label]{
-        display:flex;gap:10px;align-items:flex-start;justify-content:space-between
-      }
-      td[data-label]::before{
-        content: attr(data-label);
-        color:var(--muted);
-        font-size:12px;
-        font-weight:700;
-        flex: 0 0 40%;
-      }
-      td[data-label] > *{flex:1 1 auto;text-align:right}
-      td .muted.small{display:block;text-align:right}
-      .right{justify-content:flex-end}
+      .btn.square{width:42px;height:42px;border-radius:14px}
     }
 
-    /* Toast/Modal */
+    .m-list{display:flex;flex-direction:column;gap:10px}
+    .m-card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(17,19,26,.98);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+    }
+    .m-card summary{
+      list-style:none;
+      cursor:pointer;
+      padding:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .m-card summary::-webkit-details-marker{display:none}
+
+    .m-main{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .m-title{font-weight:800;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .m-sub{color:var(--muted);font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    .chev{
+      width:34px;height:34px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(26,31,46,.9);
+      flex:0 0 auto;
+      transition:transform .15s ease;
+    }
+    details[open] .chev{transform:rotate(180deg)}
+    .m-body{border-top:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:10px}
+    .m-row{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+    .m-row .k{color:var(--muted);font-weight:700}
+    .m-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+
+    /* ===== TOAST / MODAL ===== */
     .hidden{display:none}
-    .toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(26,31,46,.95);
-      border:1px solid var(--line);padding:10px 12px;border-radius:12px;box-shadow:var(--shadow);font-size:13px;z-index:10}
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:20}
+    .toast{
+      position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+      background:rgba(26,31,46,.95);
+      border:1px solid var(--line);
+      padding:10px 12px;
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      font-size:13px;
+      z-index:100;
+    }
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:120}
     .modal .box{width:min(980px,94vw);max-height:88vh;overflow:auto}
     .modal.show{display:flex}
   </style>
 </head>
 
 <body>
-<header>
+<header id="hdr">
   <div class="wrap top">
     <div class="brand">
       <b>Wortex Agency OS</b>
       <span id="connState" class="muted">Не подключено. Укажи URL в “Настройки”.</span>
     </div>
+
     <nav id="nav"></nav>
+
     <div class="right">
-      <button class="btn" id="btnLoad">Загрузить данные</button>
-      <button class="btn primary" id="btnSync">Синхронизировать</button>
+      <!-- Burger (виден только в compact) -->
+      <button class="btn square burger" id="btnBurger" title="Меню">
+        <svg class="icon" viewBox="0 0 24 24" fill="none">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <!-- Desktop buttons (with text) -->
+      <button class="btn desktop-only" id="btnLoadText">Загрузить данные</button>
+      <button class="btn primary desktop-only" id="btnSyncText">Синхронизировать</button>
+
+      <!-- Compact icon buttons -->
+      <button class="btn square" id="btnLoadIcon" title="Загрузить данные">
+        <svg class="icon" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 17v3h16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <button class="btn square" id="btnSyncIcon" title="Синхронизировать">
+        <svg class="icon" viewBox="0 0 24 24" fill="none">
+          <path d="M20 12a8 8 0 0 0-14.9-4M4 12a8 8 0 0 0 14.9 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M5 7V3h4M19 17v4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
   </div>
 </header>
+
+<!-- Dropdown menu for burger -->
+<div class="menu-pop" id="menuPop">
+  <div class="menu-title">
+    <b>Меню</b>
+    <button class="btn ghost" id="btnMenuClose">Закрыть</button>
+  </div>
+  <div class="menu-grid" id="menuTabs"></div>
+</div>
 
 <main class="wrap">
   <div id="page"></div>
@@ -144,7 +340,7 @@
    CONFIG / STATE
 ======================= */
 const SHEETS = ["Clients","Projects","Tasks","Transactions","Payouts","Team","UnitTypes","ProjectTypes","SplitRulesDefault","Templates","Access","AuditLog"];
-const LS_KEY = "wortex_os_settings_v5"; // новый ключ
+const LS_KEY = "wortex_os_settings_v6";
 
 const State = {
   settings: { apiUrl: "", role: "Team", token: "", actor: "" },
@@ -193,13 +389,24 @@ function visibleTabs(){
 
 function renderNav(){
   const nav = document.getElementById("nav");
+  const menuTabs = document.getElementById("menuTabs");
   nav.innerHTML = "";
+  menuTabs.innerHTML = "";
+
   visibleTabs().forEach(t=>{
-    const b = document.createElement("button");
-    b.className = "tab" + (State.activeTab===t ? " active":"");
-    b.textContent = t;
-    b.onclick = ()=>{ State.activeTab=t; render(); };
-    nav.appendChild(b);
+    const mkBtn = (isMenu=false)=>{
+      const b = document.createElement("button");
+      b.className = "tab" + (State.activeTab===t ? " active":"");
+      b.textContent = t;
+      b.onclick = ()=>{
+        State.activeTab=t;
+        render();
+        closeMenu();
+      };
+      return b;
+    };
+    nav.appendChild(mkBtn(false));
+    menuTabs.appendChild(mkBtn(true));
   });
 }
 
@@ -222,7 +429,6 @@ function render(){
 /* =======================
    HELPERS
 ======================= */
-function nowISO(){ return new Date().toISOString(); }
 function shortDate(d){
   if(!d) return "";
   const dt = new Date(d);
@@ -299,12 +505,6 @@ async function syncQueue(){
   UI.toast("Синк выполнен: " + ok);
   await loadAll();
 }
-function findById(sheetName, id){
-  const objs = sheetToObjects(sheetName);
-  const headers = (State.data[sheetName]?.[0]||[]);
-  const idKey = headers[0] ? String(headers[0]) : "id";
-  return objs.find(o=>String(o[idKey])===String(id));
-}
 function upsertLocal(sheetName, rowObj){
   const grid = State.data[sheetName] || [];
   if(grid.length===0) return;
@@ -339,6 +539,62 @@ function deadlineClass(due){
   if(diff <= 48*3600*1000) return "warn";
   return "";
 }
+
+/* =======================
+   HEADER BEHAVIOR (scroll down -> compact only)
+======================= */
+const hdr = document.getElementById("hdr");
+let lastY = window.scrollY;
+let compactLocked = false; // once compact, stays until burger toggles open/close? (we keep compact, but user can open menu)
+let menuOpen = false;
+
+function openMenu(){
+  menuOpen = true;
+  hdr.classList.add("menu-open");
+}
+function closeMenu(){
+  menuOpen = false;
+  hdr.classList.remove("menu-open");
+}
+
+function setCompact(on){
+  if(on){
+    hdr.classList.add("compact");
+    compactLocked = true;
+  }else{
+    hdr.classList.remove("compact");
+    compactLocked = false;
+    closeMenu();
+  }
+}
+
+window.addEventListener("scroll", ()=>{
+  const y = window.scrollY;
+  const down = y > lastY + 6;
+
+  // ВАЖНО: уходим в compact только при скролле вниз
+  if(down && y > 40){
+    setCompact(true);
+  }
+
+  lastY = y;
+});
+
+// Burger toggles menu, but does not change compact state
+document.getElementById("btnBurger").addEventListener("click", ()=>{
+  if(!hdr.classList.contains("compact")) return;
+  if(menuOpen) closeMenu(); else openMenu();
+});
+document.getElementById("btnMenuClose").addEventListener("click", closeMenu);
+
+// Tap outside menu to close
+document.addEventListener("click", (e)=>{
+  if(!hdr.classList.contains("menu-open")) return;
+  const pop = document.getElementById("menuPop");
+  const burger = document.getElementById("btnBurger");
+  if(pop.contains(e.target) || burger.contains(e.target)) return;
+  closeMenu();
+});
 
 /* =======================
    PAGES
@@ -389,23 +645,47 @@ function renderDashboard(){
   `;
 }
 
+/* ==== CLIENTS ==== */
 function renderClients(){
   const clients = sheetToObjects("Clients");
   const projects = sheetToObjects("Projects");
 
-  const rows = clients.map(c=>{
+  const desktopRows = clients.map(c=>{
     const count = projects.filter(p=>p.client_id===c.client_id).length;
     return `
       <tr>
-        <td data-label="Клиент"><div><b>${escapeHtml(c.client_name||"")}</b><div class="muted small">${escapeHtml(c.client_id||"")}</div></div></td>
-        <td data-label="Платформа">${escapeHtml(c.platform||"")}</td>
-        <td data-label="Статус">${escapeHtml(c.status||"")}</td>
-        <td data-label="Проектов">${count}</td>
-        <td data-label="Действие" class="right">
+        <td><b>${escapeHtml(c.client_name||"")}</b><div class="muted small">${escapeHtml(c.client_id||"")}</div></td>
+        <td>${escapeHtml(c.platform||"")}</td>
+        <td>${escapeHtml(c.status||"")}</td>
+        <td>${count}</td>
+        <td class="right">
           <button class="btn mini" onclick="Actions.openEditClient('${c.client_id}')">Изм.</button>
           <button class="btn mini danger" onclick="Actions.deleteRow('Clients','${c.client_id}')">Удалить</button>
         </td>
       </tr>
+    `;
+  }).join("");
+
+  const mobileCards = clients.map(c=>{
+    const count = projects.filter(p=>p.client_id===c.client_id).length;
+    return `
+      <details class="m-card">
+        <summary>
+          <div class="m-main">
+            <div class="m-title">${escapeHtml(c.client_name||"")}</div>
+            <div class="m-sub">${escapeHtml(c.platform||"")} • ${escapeHtml(c.status||"")} • проектов: ${count}</div>
+          </div>
+          <div class="chev">▾</div>
+        </summary>
+        <div class="m-body">
+          <div class="m-row"><span class="k">ID</span><span>${escapeHtml(c.client_id||"")}</span></div>
+          <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(c.notes||"")}</span></div>
+          <div class="m-actions">
+            <button class="btn mini" onclick="Actions.openEditClient('${c.client_id}')">Изменить</button>
+            <button class="btn mini danger" onclick="Actions.deleteRow('Clients','${c.client_id}')">Удалить</button>
+          </div>
+        </div>
+      </details>
     `;
   }).join("");
 
@@ -416,41 +696,77 @@ function renderClients(){
         <button class="btn primary" onclick="Actions.openAddClient()">+ Добавить</button>
       </div>
       <div class="sep"></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th>Клиент</th><th>Платформа</th><th>Статус</th><th>Проектов</th><th></th>
-          </tr></thead>
-          <tbody>${rows || `<tr><td colspan="5" class="muted">Пока пусто</td></tr>`}</tbody>
-        </table>
+
+      <div class="desktop-only">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Клиент</th><th>Платформа</th><th>Статус</th><th>Проектов</th><th></th>
+            </tr></thead>
+            <tbody>${desktopRows || `<tr><td colspan="5" class="muted">Пока пусто</td></tr>`}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mobile-only">
+        <div class="m-list">${mobileCards || `<div class="muted">Пока пусто</div>`}</div>
       </div>
     </div>
   `;
 }
 
+/* ==== PROJECTS ==== */
 function renderProjects(){
   const projects = sheetToObjects("Projects");
   const clients = sheetToObjects("Clients");
   const tasks = sheetToObjects("Tasks");
 
-  const rows = projects.map(p=>{
+  const desktopRows = projects.map(p=>{
     const client = clients.find(c=>c.client_id===p.client_id);
     const open = tasks.filter(t=>t.project_id===p.project_id && t.status!=="Done").length;
     const st = String(p.status||"").toLowerCase();
     const cls = st==="green"?"s-ok":(st==="yellow"?"s-warn":(st==="red"?"s-bad":""));
     return `
       <tr>
-        <td data-label="Проект"><div><b>${escapeHtml(p.project_name||"")}</b><div class="muted small">${escapeHtml(p.project_id||"")} • ${escapeHtml(p.type||"")}</div></div></td>
-        <td data-label="Клиент">${escapeHtml(client?.client_name||"")}</td>
-        <td data-label="Статус" class="status ${cls}">${escapeHtml(p.status||"")}</td>
-        <td data-label="Проверка">${escapeHtml(p.reviewer||"")}</td>
-        <td data-label="Юнит/нед">${escapeHtml(p.weekly_units||"")}</td>
-        <td data-label="Открыто">${open}</td>
-        <td data-label="Действие" class="right">
+        <td><b>${escapeHtml(p.project_name||"")}</b><div class="muted small">${escapeHtml(p.project_id||"")} • ${escapeHtml(p.type||"")}</div></td>
+        <td>${escapeHtml(client?.client_name||"")}</td>
+        <td class="status ${cls}">${escapeHtml(p.status||"")}</td>
+        <td>${escapeHtml(p.reviewer||"")}</td>
+        <td>${escapeHtml(p.weekly_units||"")}</td>
+        <td>${open}</td>
+        <td class="right">
           <button class="btn mini" onclick="Actions.openEditProject('${p.project_id}')">Изм.</button>
           <button class="btn mini danger" onclick="Actions.deleteRow('Projects','${p.project_id}')">Удалить</button>
         </td>
       </tr>
+    `;
+  }).join("");
+
+  const mobileCards = projects.map(p=>{
+    const client = clients.find(c=>c.client_id===p.client_id);
+    const open = tasks.filter(t=>t.project_id===p.project_id && t.status!=="Done").length;
+    return `
+      <details class="m-card">
+        <summary>
+          <div class="m-main">
+            <div class="m-title">${escapeHtml(p.project_name||"")}</div>
+            <div class="m-sub">${escapeHtml(client?.client_name||"")} • ${escapeHtml(p.type||"")} • открыто: ${open}</div>
+          </div>
+          <div class="chev">▾</div>
+        </summary>
+        <div class="m-body">
+          <div class="m-row"><span class="k">ID</span><span>${escapeHtml(p.project_id||"")}</span></div>
+          <div class="m-row"><span class="k">Статус</span><span>${escapeHtml(p.status||"")}</span></div>
+          <div class="m-row"><span class="k">Проверяющий</span><span>${escapeHtml(p.reviewer||"")}</span></div>
+          <div class="m-row"><span class="k">Юниты/нед</span><span>${escapeHtml(p.weekly_units||"")}</span></div>
+          <div class="m-row"><span class="k">KPI</span><span>${escapeHtml(p.kpi_goal||"")}</span></div>
+          <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(p.notes||"")}</span></div>
+          <div class="m-actions">
+            <button class="btn mini" onclick="Actions.openEditProject('${p.project_id}')">Изменить</button>
+            <button class="btn mini danger" onclick="Actions.deleteRow('Projects','${p.project_id}')">Удалить</button>
+          </div>
+        </div>
+      </details>
     `;
   }).join("");
 
@@ -461,23 +777,31 @@ function renderProjects(){
         <button class="btn primary" onclick="Actions.openAddProject()">+ Добавить</button>
       </div>
       <div class="sep"></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th>Проект</th><th>Клиент</th><th>Статус</th><th>Проверяющий</th><th>Юнит/нед</th><th>Открыто</th><th></th>
-          </tr></thead>
-          <tbody>${rows || `<tr><td colspan="7" class="muted">Пока пусто</td></tr>`}</tbody>
-        </table>
+
+      <div class="desktop-only">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Проект</th><th>Клиент</th><th>Статус</th><th>Проверяющий</th><th>Юнит/нед</th><th>Открыто</th><th></th>
+            </tr></thead>
+            <tbody>${desktopRows || `<tr><td colspan="7" class="muted">Пока пусто</td></tr>`}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mobile-only">
+        <div class="m-list">${mobileCards || `<div class="muted">Пока пусто</div>`}</div>
       </div>
     </div>
   `;
 }
 
+/* ==== TASKS ==== */
 function renderTasks(){
   const tasks = sheetToObjects("Tasks");
   const projects = sheetToObjects("Projects");
 
-  const rows = tasks
+  const desktopRows = tasks
     .sort((a,b)=> String(a.due_date||"").localeCompare(String(b.due_date||"")))
     .map(t=>{
       const p = projects.find(x=>x.project_id===t.project_id);
@@ -485,12 +809,12 @@ function renderTasks(){
       const dHtml = `<span class="deadline ${dcls}">${escapeHtml(shortDate(t.due_date))}</span>`;
       return `
         <tr>
-          <td data-label="Задача"><div><b>${escapeHtml(t.title||"")}</b><div class="muted small">${escapeHtml(t.task_id||"")} • ${escapeHtml(p?.project_name||"")}</div></div></td>
-          <td data-label="Исполнитель">${escapeHtml(t.assignee||"")}</td>
-          <td data-label="Статус">${escapeHtml(t.status||"")}</td>
-          <td data-label="Дедлайн">${dHtml}</td>
-          <td data-label="Юниты">${escapeHtml(t.units||"")}</td>
-          <td data-label="Действие" class="right">
+          <td><b>${escapeHtml(t.title||"")}</b><div class="muted small">${escapeHtml(t.task_id||"")} • ${escapeHtml(p?.project_name||"")}</div></td>
+          <td>${escapeHtml(t.assignee||"")}</td>
+          <td>${escapeHtml(t.status||"")}</td>
+          <td>${dHtml}</td>
+          <td>${escapeHtml(t.units||"")}</td>
+          <td class="right">
             <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','To do')">To do</button>
             <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Doing')">Doing</button>
             <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Review')">Review</button>
@@ -501,6 +825,35 @@ function renderTasks(){
       `;
     }).join("");
 
+  const mobileCards = tasks
+    .sort((a,b)=> String(a.due_date||"").localeCompare(String(b.due_date||"")))
+    .map(t=>{
+      const p = projects.find(x=>x.project_id===t.project_id);
+      return `
+        <details class="m-card">
+          <summary>
+            <div class="m-main">
+              <div class="m-title">${escapeHtml(t.title||"")}</div>
+              <div class="m-sub">${escapeHtml(t.assignee||"")} • ${escapeHtml(p?.project_name||"")} • ${escapeHtml(t.status||"")}</div>
+            </div>
+            <div class="chev">▾</div>
+          </summary>
+          <div class="m-body">
+            <div class="m-row"><span class="k">Дедлайн</span><span>${escapeHtml(shortDate(t.due_date))}</span></div>
+            <div class="m-row"><span class="k">Юниты</span><span>${escapeHtml(t.units||"")}</span></div>
+            <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(t.notes||"")}</span></div>
+            <div class="m-actions">
+              <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','To do')">To do</button>
+              <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Doing')">Doing</button>
+              <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Review')">Review</button>
+              <button class="btn mini" onclick="Actions.taskMove('${t.task_id}','Done')">Done</button>
+              <button class="btn mini danger" onclick="Actions.deleteRow('Tasks','${t.task_id}')">Удалить</button>
+            </div>
+          </div>
+        </details>
+      `;
+    }).join("");
+
   return `
     <div class="card">
       <div class="row" style="align-items:center;justify-content:space-between">
@@ -508,24 +861,33 @@ function renderTasks(){
         <button class="btn primary" onclick="Actions.openAddTask()">+ Добавить</button>
       </div>
       <div class="sep"></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th>Задача</th><th>Исполнитель</th><th>Статус</th><th>Дедлайн</th><th>Юниты</th><th></th>
-          </tr></thead>
-          <tbody>${rows || `<tr><td colspan="6" class="muted">Пока пусто</td></tr>`}</tbody>
-        </table>
+
+      <div class="desktop-only">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Задача</th><th>Исполнитель</th><th>Статус</th><th>Дедлайн</th><th>Юниты</th><th></th>
+            </tr></thead>
+            <tbody>${desktopRows || `<tr><td colspan="6" class="muted">Пока пусто</td></tr>`}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mobile-only">
+        <div class="m-list">${mobileCards || `<div class="muted">Пока пусто</div>`}</div>
       </div>
     </div>
   `;
 }
 
+/* ==== FINANCE ==== */
 function renderFinance(){
   const role = (State.settings.role || "Team").trim();
   const txAll = sheetToObjects("Transactions").filter(x => String(x.transaction_id||"").trim() !== "");
   const projects = sheetToObjects("Projects");
   const projMap = Object.fromEntries(projects.map(p=>[p.project_id, p]));
 
+  // Summary (EUR)
   const cash = sum(txAll.map(x=>Number(x.cash_delta_eur)||0));
   const bank = sum(txAll.map(x=>Number(x.bank_10)||0));
   const payrollPool = sum(txAll.map(x=>Number(x.payroll_50)||0));
@@ -547,22 +909,46 @@ function renderFinance(){
       const p = projMap[x.project_id];
       return `
         <tr>
-          <td data-label="Дата">${escapeHtml(shortDate(x.date))}</td>
-          <td data-label="Проект">${escapeHtml(p?.project_name||x.project_id||"")}</td>
-          <td data-label="Тип">${escapeHtml(x.type||"")}</td>
-          <td data-label="Сумма">
-            <div>
-              <b>${escapeHtml(x.amount||"")} ${escapeHtml(x.currency||"")}</b>
-              <div class="muted small">EUR: ${escapeHtml(x.amount_eur||"")}</div>
-            </div>
-          </td>
-          <td data-label="Клиент">${escapeHtml(x.client_name||"")}</td>
-          <td data-label="Кто→Кому">${escapeHtml(x.paid_by||"")} → ${escapeHtml(x.paid_to||"")}</td>
-          <td data-label="Описание">${escapeHtml(x.description||"")}</td>
-          <td data-label="Действие" class="right">
+          <td>${escapeHtml(shortDate(x.date))}</td>
+          <td>${escapeHtml(p?.project_name||x.project_id||"")}</td>
+          <td>${escapeHtml(x.type||"")}</td>
+          <td><b>${escapeHtml(x.amount||"")} ${escapeHtml(x.currency||"")}</b><div class="muted small">EUR: ${escapeHtml(x.amount_eur||"")}</div></td>
+          <td>${escapeHtml(x.client_name||"")}</td>
+          <td>${escapeHtml(x.paid_by||"")} → ${escapeHtml(x.paid_to||"")}</td>
+          <td>${escapeHtml(x.description||"")}</td>
+          <td class="right">
             <button class="btn mini danger" onclick="Actions.deleteRow('Transactions','${x.transaction_id}')">Удалить</button>
           </td>
         </tr>
+      `;
+    }).join("");
+
+  const mobileCards = txAll
+    .sort((a,b)=> String(b.date||"").localeCompare(String(a.date||"")))
+    .slice(0,150)
+    .map(x=>{
+      const p = projMap[x.project_id];
+      const title = `${escapeHtml(p?.project_name||x.project_id||"")}`;
+      const sub = `${escapeHtml(shortDate(x.date))} • ${escapeHtml(x.type||"")} • ${escapeHtml(x.amount||"")} ${escapeHtml(x.currency||"")}`;
+      return `
+        <details class="m-card">
+          <summary>
+            <div class="m-main">
+              <div class="m-title">${title}</div>
+              <div class="m-sub">${sub}</div>
+            </div>
+            <div class="chev">▾</div>
+          </summary>
+          <div class="m-body">
+            <div class="m-row"><span class="k">EUR</span><span>${escapeHtml(x.amount_eur||"")}</span></div>
+            <div class="m-row"><span class="k">Клиент</span><span>${escapeHtml(x.client_name||"")}</span></div>
+            <div class="m-row"><span class="k">Кто→Кому</span><span>${escapeHtml(x.paid_by||"")} → ${escapeHtml(x.paid_to||"")}</span></div>
+            <div class="m-row"><span class="k">Описание</span><span>${escapeHtml(x.description||"")}</span></div>
+            <div class="m-actions">
+              <button class="btn mini danger" onclick="Actions.deleteRow('Transactions','${x.transaction_id}')">Удалить</button>
+            </div>
+          </div>
+        </details>
       `;
     }).join("");
 
@@ -586,16 +972,23 @@ function renderFinance(){
       <div class="card">
         <div class="row" style="align-items:center;justify-content:space-between">
           <h3 style="margin:0">Операции (последние 150)</h3>
-          <button class="btn primary" onclick="Actions.openAddTx()">+ Добавить</button>
+          <button class="btn primary" onclick="Actions.openAddTx()">+ Добавить операцию</button>
         </div>
         <div class="sep"></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Дата</th><th>Проект</th><th>Тип</th><th>Сумма</th><th>Клиент</th><th>Кто→Кому</th><th>Описание</th><th></th>
-            </tr></thead>
-            <tbody>${rows || `<tr><td colspan="8" class="muted">Пока пусто</td></tr>`}</tbody>
-          </table>
+
+        <div class="desktop-only">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Дата</th><th>Проект</th><th>Тип</th><th>Сумма</th><th>Клиент</th><th>Кто→Кому</th><th>Описание</th><th></th>
+              </tr></thead>
+              <tbody>${rows || `<tr><td colspan="8" class="muted">Пока пусто</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mobile-only">
+          <div class="m-list">${mobileCards || `<div class="muted">Пока пусто</div>`}</div>
         </div>
       </div>
 
@@ -618,24 +1011,47 @@ function renderFinance(){
 
 function renderTeam(){
   const team = sheetToObjects("Team");
-  const rows = team.map(p=>`
+
+  const desktopRows = team.map(p=>`
     <tr>
-      <td data-label="Человек"><b>${escapeHtml(p.person||"")}</b></td>
-      <td data-label="Роль">${escapeHtml(p.role||"")}</td>
-      <td data-label="Capacity">${escapeHtml(p.weekly_capacity_units||"")}</td>
-      <td data-label="Заметки">${escapeHtml(p.notes||"")}</td>
+      <td><b>${escapeHtml(p.person||"")}</b></td>
+      <td>${escapeHtml(p.role||"")}</td>
+      <td>${escapeHtml(p.weekly_capacity_units||"")}</td>
+      <td>${escapeHtml(p.notes||"")}</td>
     </tr>
+  `).join("");
+
+  const mobileCards = team.map(p=>`
+    <details class="m-card">
+      <summary>
+        <div class="m-main">
+          <div class="m-title">${escapeHtml(p.person||"")}</div>
+          <div class="m-sub">${escapeHtml(p.role||"")} • cap: ${escapeHtml(p.weekly_capacity_units||"")}</div>
+        </div>
+        <div class="chev">▾</div>
+      </summary>
+      <div class="m-body">
+        <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(p.notes||"")}</span></div>
+      </div>
+    </details>
   `).join("");
 
   return `
     <div class="card">
       <h3>Команда</h3>
       <div class="sep"></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Человек</th><th>Роль</th><th>Capacity</th><th>Заметки</th></tr></thead>
-          <tbody>${rows || `<tr><td colspan="4" class="muted">Пока пусто</td></tr>`}</tbody>
-        </table>
+
+      <div class="desktop-only">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Человек</th><th>Роль</th><th>Capacity</th><th>Заметки</th></tr></thead>
+            <tbody>${desktopRows || `<tr><td colspan="4" class="muted">Пока пусто</td></tr>`}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mobile-only">
+        <div class="m-list">${mobileCards || `<div class="muted">Пока пусто</div>`}</div>
       </div>
     </div>
   `;
@@ -751,6 +1167,7 @@ const Actions = {
     localStorage.setItem(key, JSON.stringify(r));
     render();
   },
+
   deleteRow(sheet, id){
     if(!confirm("Удалить запись?")) return;
     queueOp({ sheet, action:"delete", row: { [State.data[sheet][0][0]]: id } });
@@ -758,13 +1175,22 @@ const Actions = {
     render();
   },
 
-  /* Модалки для клиентов/проектов/задач оставляем как у тебя были ранее.
-     Если нужно — верну полностью, но сейчас фокус на мобильной адаптации таблиц. */
-  openAddClient(){ UI.toast("ОК"); },
-  openEditClient(){ UI.toast("ОК"); },
-  openAddProject(){ UI.toast("ОК"); },
-  openEditProject(){ UI.toast("ОК"); },
-  openAddTask(){ UI.toast("ОК"); },
+  /* TODO: тут оставлены заглушки как раньше — если хочешь, вернём модалки клиентов/проектов/задач */
+  openAddClient(){ UI.toast("Добавление клиента: можно вернуть модалку (скажи)."); },
+  openEditClient(){ UI.toast("Редактирование клиента: можно вернуть модалку (скажи)."); },
+  openAddProject(){ UI.toast("Добавление проекта: можно вернуть модалку (скажи)."); },
+  openEditProject(){ UI.toast("Редактирование проекта: можно вернуть модалку (скажи)."); },
+  openAddTask(){ UI.toast("Добавление задачи: можно вернуть модалку (скажи)."); },
+
+  taskMove(taskId, status){
+    const t = sheetToObjects("Tasks").find(x=>x.task_id===taskId);
+    if(!t) return;
+    t.status = status;
+    if(status==="Done") t.completed_at = new Date().toISOString();
+    queueOp({ sheet:"Tasks", action:"upsert", row: t });
+    upsertLocal("Tasks", t);
+    render();
+  },
 
   openAddTx(){
     const projects = sheetToObjects("Projects");
@@ -878,12 +1304,14 @@ const Actions = {
 };
 
 /* =======================
-   WIRE
+   WIRE BUTTONS
 ======================= */
-document.getElementById("btnLoad").onclick = async ()=>{
+document.getElementById("btnLoadText").onclick =
+document.getElementById("btnLoadIcon").onclick = async ()=>{
   try{ await loadAll(); } catch(e){ UI.toast("Ошибка загрузки: " + (e.message||e)); }
 };
-document.getElementById("btnSync").onclick = async ()=>{
+document.getElementById("btnSyncText").onclick =
+document.getElementById("btnSyncIcon").onclick = async ()=>{
   try{ await syncQueue(); } catch(e){ UI.toast("Ошибка синка: " + (e.message||e)); }
 };
 
