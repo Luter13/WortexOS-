@@ -79,7 +79,6 @@
     header.compact .wrap{padding-top:10px;padding-bottom:10px}
     header.compact .brand span{display:none}
     header.compact nav{display:none}
-    header.compact .btn:not(.square){display:none}
     header.compact .burger{display:inline-flex}
     .burger{display:none}
 
@@ -158,7 +157,7 @@
     }
     table{
       width:100%;
-      border-collapse:collapse;   /* ключ к ровным линиям */
+      border-collapse:collapse;
       font-size:12.6px;
       table-layout:fixed;
     }
@@ -180,7 +179,7 @@
     tbody td{
       padding:10px;
       vertical-align:middle;
-      border-bottom:1px solid var(--line); /* линия на всю ширину — для каждого td */
+      border-bottom:1px solid var(--line);
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
@@ -207,7 +206,7 @@
     .dot.yellow{background:var(--warn)}
     .dot.red{background:var(--bad)}
     .status-wrap{display:inline-flex;align-items:center;gap:0}
-    .status-text{display:none} /* текст green/yellow/red скрываем */
+    .status-text{display:none}
 
     .deadline.bad{color:var(--bad);font-weight:800}
     .deadline.warn{color:var(--warn);font-weight:800}
@@ -306,23 +305,21 @@
     <nav id="nav"></nav>
 
     <div class="right">
-      <button class="btn square burger" id="btnBurger" title="Меню">
+      <button type="button" class="btn square burger" id="btnBurger" title="Меню">
         <svg class="icon" viewBox="0 0 24 24" fill="none">
           <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
 
-      <button class="btn desktop-only" id="btnLoadText">Загрузить данные</button>
-      <button class="btn primary desktop-only" id="btnSyncText">Синхронизировать</button>
-
-      <button class="btn square" id="btnLoadIcon" title="Загрузить данные">
+      <!-- ОСТАВЛЯЕМ ТОЛЬКО ИКОНКИ -->
+      <button type="button" class="btn square" id="btnLoadIcon" title="Загрузить данные">
         <svg class="icon" viewBox="0 0 24 24" fill="none">
           <path d="M12 3v10m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M4 17v3h16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
 
-      <button class="btn square" id="btnSyncIcon" title="Синхронизировать">
+      <button type="button" class="btn square" id="btnSyncIcon" title="Синхронизировать">
         <svg class="icon" viewBox="0 0 24 24" fill="none">
           <path d="M20 12a8 8 0 0 0-14.9-4M4 12a8 8 0 0 0 14.9 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           <path d="M5 7V3h4M19 17v4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -335,7 +332,7 @@
 <div class="menu-pop" id="menuPop">
   <div class="menu-title">
     <b>Меню</b>
-    <button class="btn ghost" id="btnMenuClose">Закрыть</button>
+    <button type="button" class="btn ghost" id="btnMenuClose">Закрыть</button>
   </div>
   <div class="menu-grid" id="menuTabs"></div>
 </div>
@@ -350,7 +347,7 @@
   <div class="card box">
     <div class="row" style="justify-content:space-between;align-items:center">
       <div class="muted small" id="modalTitle"></div>
-      <button class="btn ghost" onclick="UI.closeModal()">Закрыть</button>
+      <button type="button" class="btn ghost" onclick="UI.closeModal()">Закрыть</button>
     </div>
     <div class="sep"></div>
     <div id="modalBody"></div>
@@ -362,7 +359,7 @@
    CONFIG / STATE
 ======================= */
 const SHEETS = ["Clients","Projects","Tasks","Transactions","Payouts","Team","UnitTypes","ProjectTypes","SplitRulesDefault","Templates","Access","AuditLog"];
-const LS_KEY = "wortex_os_settings_final_v1";
+const LS_KEY = "wortex_os_settings_final_v2"; // bumped
 
 const State = {
   settings: { apiUrl: "", role: "Team", token: "", actor: "" },
@@ -419,6 +416,7 @@ function renderNav(){
   visibleTabs().forEach(t=>{
     const mkBtn = ()=>{
       const b = document.createElement("button");
+      b.type = "button";
       b.className = "tab" + (State.activeTab===t ? " active":"");
       b.textContent = t;
       b.onclick = ()=>{
@@ -659,7 +657,7 @@ document.addEventListener("click", (e)=>{
 function modalActionsRow({onSaveLabel="Сохранить", onSaveJs=""}){
   return `
     <div class="row" style="justify-content:flex-end;margin-top:10px">
-      <button class="btn primary" onclick="${onSaveJs}">${onSaveLabel}</button>
+      <button type="button" class="btn primary" onclick="${onSaveJs}">${onSaveLabel}</button>
     </div>`;
 }
 
@@ -675,7 +673,6 @@ function getTeamPeople(){
   return sheetToObjects("Team").map(x=>String(x.person||"").trim()).filter(Boolean);
 }
 function getReviewers(){
-  // по умолчанию тот же список людей
   return getTeamPeople();
 }
 
@@ -1081,7 +1078,7 @@ function txFormHtml({mode, tx}){
 }
 
 /* =======================
-   ACTIONS (delete/edit buttons)
+   ACTIONS
 ======================= */
 const Actions = {
   saveSettings(){
@@ -1106,7 +1103,6 @@ const Actions = {
     render();
   },
 
-  // Delegates
   openAddClient: Forms.openAddClient,
   openEditClient: Forms.openEditClient,
   openAddProject: Forms.openAddProject,
@@ -1158,10 +1154,10 @@ function renderDashboard(){
       <div class="card">
         <h3>Быстрые действия</h3>
         <div class="row">
-          <button class="btn primary" onclick="Actions.openAddClient()">+ Клиент</button>
-          <button class="btn primary" onclick="Actions.openAddProject()">+ Проект</button>
-          <button class="btn primary" onclick="Actions.openAddTask()">+ Задача</button>
-          ${(State.settings.role.trim()==="Team") ? "" : `<button class="btn primary" onclick="Actions.openAddTx()">+ Операция</button>`}
+          <button type="button" class="btn primary" onclick="Actions.openAddClient()">+ Клиент</button>
+          <button type="button" class="btn primary" onclick="Actions.openAddProject()">+ Проект</button>
+          <button type="button" class="btn primary" onclick="Actions.openAddTask()">+ Задача</button>
+          ${(State.settings.role.trim()==="Team") ? "" : `<button type="button" class="btn primary" onclick="Actions.openAddTx()">+ Операция</button>`}
         </div>
       </div>
 
@@ -1191,8 +1187,8 @@ function renderClients(){
         <td>${count}</td>
         <td class="actions-cell">
           <span class="actions">
-            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditClient('${escapeAttr(c.client_id)}')">${iconPencil()}</button>
-            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Clients','${escapeAttr(c.client_id)}')">${iconTrash()}</button>
+            <button type="button" class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditClient('${escapeAttr(c.client_id)}')">${iconPencil()}</button>
+            <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Clients','${escapeAttr(c.client_id)}')">${iconTrash()}</button>
           </span>
         </td>
       </tr>
@@ -1214,8 +1210,8 @@ function renderClients(){
           <div class="m-row"><span class="k">ID</span><span>${escapeHtml(c.client_id||"")}</span></div>
           <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(c.notes||"")}</span></div>
           <div class="m-actions">
-            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditClient('${escapeAttr(c.client_id)}')">${iconPencil()}</button>
-            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Clients','${escapeAttr(c.client_id)}')">${iconTrash()}</button>
+            <button type="button" class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditClient('${escapeAttr(c.client_id)}')">${iconPencil()}</button>
+            <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Clients','${escapeAttr(c.client_id)}')">${iconTrash()}</button>
           </div>
         </div>
       </details>
@@ -1226,7 +1222,7 @@ function renderClients(){
     <div class="card">
       <div class="row" style="align-items:center;justify-content:space-between">
         <h3 style="margin:0">Клиенты</h3>
-        <button class="btn primary" onclick="Actions.openAddClient()">+ Добавить</button>
+        <button type="button" class="btn primary" onclick="Actions.openAddClient()">+ Добавить</button>
       </div>
       <div class="sep"></div>
 
@@ -1269,8 +1265,8 @@ function renderProjects(){
         <td>${open}</td>
         <td class="actions-cell">
           <span class="actions">
-            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditProject('${escapeAttr(p.project_id)}')">${iconPencil()}</button>
-            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Projects','${escapeAttr(p.project_id)}')">${iconTrash()}</button>
+            <button type="button" class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditProject('${escapeAttr(p.project_id)}')">${iconPencil()}</button>
+            <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Projects','${escapeAttr(p.project_id)}')">${iconTrash()}</button>
           </span>
         </td>
       </tr>
@@ -1298,8 +1294,8 @@ function renderProjects(){
           <div class="m-row"><span class="k">KPI</span><span>${escapeHtml(p.kpi_goal||"")}</span></div>
           <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(p.notes||"")}</span></div>
           <div class="m-actions">
-            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditProject('${escapeAttr(p.project_id)}')">${iconPencil()}</button>
-            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Projects','${escapeAttr(p.project_id)}')">${iconTrash()}</button>
+            <button type="button" class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditProject('${escapeAttr(p.project_id)}')">${iconPencil()}</button>
+            <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Projects','${escapeAttr(p.project_id)}')">${iconTrash()}</button>
           </div>
         </div>
       </details>
@@ -1310,7 +1306,7 @@ function renderProjects(){
     <div class="card">
       <div class="row" style="align-items:center;justify-content:space-between">
         <h3 style="margin:0">Проекты</h3>
-        <button class="btn primary" onclick="Actions.openAddProject()">+ Добавить</button>
+        <button type="button" class="btn primary" onclick="Actions.openAddProject()">+ Добавить</button>
       </div>
       <div class="sep"></div>
 
@@ -1351,8 +1347,8 @@ function renderTasks(){
         <td>${escapeHtml(t.units||"")}</td>
         <td class="actions-cell">
           <span class="actions">
-            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTask('${escapeAttr(t.task_id)}')">${iconPencil()}</button>
-            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Tasks','${escapeAttr(t.task_id)}')">${iconTrash()}</button>
+            <button type="button" class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTask('${escapeAttr(t.task_id)}')">${iconPencil()}</button>
+            <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Tasks','${escapeAttr(t.task_id)}')">${iconTrash()}</button>
           </span>
         </td>
       </tr>
@@ -1375,12 +1371,12 @@ function renderTasks(){
           <div class="m-row"><span class="k">Юниты</span><span>${escapeHtml(t.units||"")}</span></div>
           <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(t.notes||"")}</span></div>
           <div class="m-actions">
-            <button class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','To do')">To do</button>
-            <button class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Doing')">Doing</button>
-            <button class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Review')">Review</button>
-            <button class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Done')">Done</button>
-            <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTask('${escapeAttr(t.task_id)}')">${iconPencil()}</button>
-            <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Tasks','${escapeAttr(t.task_id)}')">${iconTrash()}</button>
+            <button type="button" class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','To do')">To do</button>
+            <button type="button" class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Doing')">Doing</button>
+            <button type="button" class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Review')">Review</button>
+            <button type="button" class="btn" onclick="Actions.taskMove('${escapeAttr(t.task_id)}','Done')">Done</button>
+            <button type="button" class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTask('${escapeAttr(t.task_id)}')">${iconPencil()}</button>
+            <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Tasks','${escapeAttr(t.task_id)}')">${iconTrash()}</button>
           </div>
         </div>
       </details>
@@ -1391,7 +1387,7 @@ function renderTasks(){
     <div class="card">
       <div class="row" style="align-items:center;justify-content:space-between">
         <h3 style="margin:0">Задачи</h3>
-        <button class="btn primary" onclick="Actions.openAddTask()">+ Добавить</button>
+        <button type="button" class="btn primary" onclick="Actions.openAddTask()">+ Добавить</button>
       </div>
       <div class="sep"></div>
 
@@ -1404,7 +1400,7 @@ function renderTasks(){
             <tbody>${desktopRows || `<tr><td colspan="6" class="muted">Пока пусто</td></tr>`}</tbody>
           </table>
         </div>
-        <div class="hint">Смена статуса: открой ✏️ и выбери статус, либо используй кнопки на телефоне.</div>
+        <div class="hint">На ПК: ✏️ открывает изменение. На телефоне — карточка раскрывается.</div>
       </div>
 
       <div class="mobile-only">
@@ -1450,8 +1446,8 @@ function renderFinance(){
           <td>${escapeHtml(x.description||"")}</td>
           <td class="actions-cell">
             <span class="actions">
-              <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTx('${escapeAttr(x.transaction_id)}')">${iconPencil()}</button>
-              <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Transactions','${escapeAttr(x.transaction_id)}')">${iconTrash()}</button>
+              <button type="button" class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTx('${escapeAttr(x.transaction_id)}')">${iconPencil()}</button>
+              <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Transactions','${escapeAttr(x.transaction_id)}')">${iconTrash()}</button>
             </span>
           </td>
         </tr>
@@ -1480,8 +1476,8 @@ function renderFinance(){
             <div class="m-row"><span class="k">Кто→Кому</span><span>${escapeHtml(x.paid_by||"")} → ${escapeHtml(x.paid_to||"")}</span></div>
             <div class="m-row"><span class="k">Описание</span><span>${escapeHtml(x.description||"")}</span></div>
             <div class="m-actions">
-              <button class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTx('${escapeAttr(x.transaction_id)}')">${iconPencil()}</button>
-              <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Transactions','${escapeAttr(x.transaction_id)}')">${iconTrash()}</button>
+              <button type="button" class="btn icon-sm blue" title="Изменить" onclick="Actions.openEditTx('${escapeAttr(x.transaction_id)}')">${iconPencil()}</button>
+              <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Transactions','${escapeAttr(x.transaction_id)}')">${iconTrash()}</button>
             </div>
           </div>
         </details>
@@ -1508,7 +1504,7 @@ function renderFinance(){
       <div class="card">
         <div class="row" style="align-items:center;justify-content:space-between">
           <h3 style="margin:0">Операции (последние 150)</h3>
-          <button class="btn primary" onclick="Actions.openAddTx()">+ Добавить операцию</button>
+          <button type="button" class="btn primary" onclick="Actions.openAddTx()">+ Добавить операцию</button>
         </div>
         <div class="sep"></div>
 
@@ -1556,7 +1552,7 @@ function renderTeam(){
       <td>${escapeHtml(p.notes||"")}</td>
       <td class="actions-cell">
         <span class="actions">
-          <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Team','${escapeAttr(p.person)}')">${iconTrash()}</button>
+          <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Team','${escapeAttr(p.person)}')">${iconTrash()}</button>
         </span>
       </td>
     </tr>
@@ -1574,7 +1570,7 @@ function renderTeam(){
       <div class="m-body">
         <div class="m-row"><span class="k">Заметки</span><span>${escapeHtml(p.notes||"")}</span></div>
         <div class="m-actions">
-          <button class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Team','${escapeAttr(p.person)}')">${iconTrash()}</button>
+          <button type="button" class="btn icon-sm danger" title="Удалить" onclick="Actions.deleteRow('Team','${escapeAttr(p.person)}')">${iconTrash()}</button>
         </div>
       </div>
     </details>
@@ -1592,7 +1588,7 @@ function renderTeam(){
             <tbody>${desktopRows || `<tr><td colspan="5" class="muted">Пока пусто</td></tr>`}</tbody>
           </table>
         </div>
-        <div class="hint">Добавление/редактирование команды делай в Google Sheets. Удаление — здесь.</div>
+        <div class="hint">Добавление/редактирование команды — в Google Sheets. Удаление — здесь.</div>
       </div>
 
       <div class="mobile-only">
@@ -1629,7 +1625,7 @@ function renderRoutines(){
           `;
         }).join("")}
         <div class="sep"></div>
-        <button class="btn" onclick="Actions.resetRoutine('${g}')">Сбросить</button>
+        <button type="button" class="btn" onclick="Actions.resetRoutine('${g}')">Сбросить</button>
       </div>
     `;
   }
@@ -1686,8 +1682,8 @@ function renderSettings(){
       </div>
 
       <div class="row" style="margin-top:10px">
-        <button class="btn primary" onclick="Actions.saveSettings()">Сохранить</button>
-        <button class="btn" onclick="Actions.testConnection()">Проверить соединение</button>
+        <button type="button" class="btn primary" onclick="Actions.saveSettings()">Сохранить</button>
+        <button type="button" class="btn" onclick="Actions.testConnection()">Проверить соединение</button>
       </div>
 
       <div class="sep"></div>
@@ -1697,13 +1693,11 @@ function renderSettings(){
 }
 
 /* =======================
-   WIRE BUTTONS
+   WIRE BUTTONS (ИКОНКИ)
 ======================= */
-document.getElementById("btnLoadText").onclick =
 document.getElementById("btnLoadIcon").onclick = async ()=>{
   try{ await loadAll(); } catch(e){ UI.toast("Ошибка загрузки: " + (e.message||e)); }
 };
-document.getElementById("btnSyncText").onclick =
 document.getElementById("btnSyncIcon").onclick = async ()=>{
   try{ await syncQueue(); } catch(e){ UI.toast("Ошибка синка: " + (e.message||e)); }
 };
